@@ -163,7 +163,7 @@ void Board :: setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES],
     memcpy(hashPieceParts,pieceParts,sizeof(Int64) * MAX_COLORS * MAX_TYPES
                                                    * NUM_SQUARES);
     memcpy(hashTurnParts, turnParts, sizeof(Int64) * MAX_COLORS);
-    memcpy(hashStepsLeftParts, stepsLeftParts, sizeof (Int64) * 4);
+    memcpy(hashStepsLeftParts, stepsLeftParts, sizeof (Int64) * 5);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -425,7 +425,7 @@ void Board :: unchangeTurn(unsigned int oldStepsLeft)
     //update the hashes
     hash ^= hashTurnParts[sideToMove];
     hash ^= hashTurnParts[oppColorOf(sideToMove)];
-    hash ^= hashStepsLeftParts[4];
+    hash ^= hashStepsLeftParts[stepsLeft];
     hash ^= hashStepsLeftParts[oldStepsLeft];
 }
 

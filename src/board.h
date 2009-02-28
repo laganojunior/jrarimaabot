@@ -61,7 +61,7 @@ class Board
 
     Int64 hashPieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
     Int64 hashTurnParts[MAX_COLORS];
-    Int64 hashStepsLeftParts[4];
+    Int64 hashStepsLeftParts[5];
 
     //hashes
     Int64 hash; //key that is used to access the entry

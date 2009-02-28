@@ -40,7 +40,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
     //create the random hash parts
     Int64 pieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
     Int64 turnParts[MAX_COLORS];
-    Int64 stepsLeftParts[4];
+    Int64 stepsLeftParts[5];
 	for (int color = 0; color < MAX_COLORS; color++)
 	{
 		for (int type = 0; type < MAX_TYPES; type++)
@@ -54,7 +54,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
 		turnParts[color] = randInt64();
 	}
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
         stepsLeftParts[i] = randInt64();
     }
