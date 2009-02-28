@@ -473,6 +473,14 @@ unsigned int Board :: genMoves(StepCombo combos[])
     //Generate all 1 step combos, then extend to pulls if possible, and 
     //explore push options.
 
+    //keep track of pieces that outrank this piece in order to check if the
+    //piece is frozen. Note since the iteration of type starts with the
+    //elephant, it starts with no pieces, but as the iteration goes down
+    //piece rank, the outranking pieces are then added
+    Int64 outrankingPieces = 0;
+
+    Int64 friends = getAllPiecesOfColor(sideToMove);
+
     //iterate through all the piece types except the rabbit which is treated
     //differently as it can't move back and can't possibly push or pull.
     for (int type = 0; type < RABBIT; ++type)
@@ -487,8 +495,10 @@ unsigned int Board :: genMoves(StepCombo combos[])
 
             unsigned char piece = genPiece(sideToMove,type);
 
-            //check if the piece that is frozen
-            if (isFrozen(from, piece))
+            //check if the piece that is frozen by making sure no outranking
+            //pieces are near and there are friends nearby
+            if (!(friends & getNeighbors(from)) && 
+                (outrankingPieces & getNeighbors(from)))
                 continue;
 
             //check if moving the piece leads to a capture. This is only
@@ -771,6 +781,10 @@ unsigned int Board :: genMoves(StepCombo combos[])
                 }
             }
         }
+
+        //before moving on to the next lower type, add the next lower 
+        //outranking piece type
+        outrankingPieces |= pieces[oppColorOf(sideToMove)][type];
     }
 
     //Generate Rabbit Moves separately, do not check for push/pulls
@@ -784,8 +798,10 @@ unsigned int Board :: genMoves(StepCombo combos[])
         rabbits ^= Int64FromIndex(from);
     
         unsigned char piece = genPiece(sideToMove,RABBIT);
-        //check if the piece that is frozen
-        if (isFrozen(from, piece))
+        //check if the piece that is frozen by making sure no outranking
+        //pieces are near and there are friends nearby
+        if (!(friends & getNeighbors(from)) && 
+            (outrankingPieces & getNeighbors(from)))
             continue;
 
         //check if moving the piece leads to a capture. This is only
