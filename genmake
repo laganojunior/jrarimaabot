@@ -1,0 +1,121 @@
+#! /usr/bin/env python
+
+import os
+import re
+import string
+
+targetname = "jrarimaabot"
+releaseflags  = "-O2 -pipe -march=native"
+debugflags    = "-O2 -pg -pipe -march=native"
+headers = []
+sources = []
+sources_suffix = []
+
+# function that recursively grabs dependencies
+def getDependencies(filename, dependencies):
+    print "Getting Header Dependencies for %s" % filename
+    filename = string.join(["src/",filename], "")
+    f = open(filename)
+    
+    # Use regular expressions to get header file dependencies
+    reg = re.compile(r"\s*#include\s*[\"<](\w*[.]?\w*)[>\"].*$")
+
+    for line in f:
+        m = reg.match(line);
+        if m is not None:
+            header = m.group(1)
+            if header in headers:
+                print "%s depends on %s" % (filename, header)
+                if not header in dependencies:
+                    dependencies.append(header)
+                    getDependencies(header, dependencies)
+    
+    f.close()
+
+    
+
+#look through the folder to find all source and headers
+print "Searching Directory\n"
+for filename in os.listdir("./src"):
+    #check the extensions and sort them into source and headers
+    if filename.endswith(".h") or filename.endswith(".hpp"):
+        print "Found header: %s" % filename
+        headers.append(filename)
+    
+    if filename.endswith(".c"):
+        print "Found source: %s" % filename
+        sources.append(filename.replace(".c",""))
+        sources_suffix.append("c")
+
+    if filename.endswith(".cpp"):
+        print "Found source: %s" % filename
+        sources.append(filename.replace(".cpp",""))
+        sources_suffix.append("cpp")
+
+makefile = open("Makefile","w");
+
+#make release target, with dependencies on all object files compiled
+#from sources
+print "Generating Target %s" % targetname
+
+print >> makefile, "%s:" % targetname,
+for o in sources:
+    print >> makefile, "obj/%s.o" % o,
+print >> makefile
+
+print >> makefile, "\tg++ %s" % releaseflags ,
+for o in sources:
+    print >> makefile, "obj/%s.o" % o,
+print >> makefile, "-o %s" % targetname
+print >> makefile
+
+#make debug target, with dependencies on all object files compiled
+#from sources
+print "Generating debug targets"
+
+print >> makefile, "debug: %s_debug" % targetname
+print >> makefile
+
+print >> makefile, "%s_debug:" % targetname,
+for o in sources:
+    print >> makefile, "obj/%s_debug.o" % o,
+print >> makefile
+
+print >> makefile, "\tg++ %s" % debugflags ,
+for o in sources:
+    print >> makefile, "obj/%s_debug.o" % o,
+print >> makefile, "-o %s_debug" % targetname
+print >> makefile
+
+#Generate clean target
+print "Generating Target Clean"
+print >> makefile, "clean:"
+for o in sources:
+    print >> makefile, "\trm -f obj/%s.o obj/%s_debug.o" % (o,o)
+print >> makefile , "\trm -f %s %s_debug" % (targetname,targetname)
+print >> makefile
+
+#Generate targets for each object file
+print >> makefile , "# Object Targets"
+print "\n***Generating object targets***\n"
+for index,s in enumerate(sources):
+    print "\n***Generating target for: %s***\n" % s
+    
+    # Get dependencies
+    print "Getting Dependencies\n"
+    dependencies = [string.join([s,sources_suffix[index]],".")]
+    getDependencies(dependencies[0],dependencies)
+    for index, d in enumerate(dependencies):
+        dependencies[index] = string.join(["src/",d],"")
+    
+    # Write the release target
+    print >> makefile , "obj/%s.o: %s" % (s,string.join(dependencies," "))
+    print >> makefile , "\tg++ -c %s src/%s.%s -o obj/%s.o" % (releaseflags,s,sources_suffix[index],s) 
+    print >> makefile
+
+    # Write the debug target
+    print >> makefile , "obj/%s_debug.o: %s" % (s,string.join(dependencies," "))
+    print >> makefile , "\tg++ -c %s src/%s.%s -o obj/%s_debug.o" % (debugflags,s,sources_suffix[index],s) 
+    print >> makefile
+
+
