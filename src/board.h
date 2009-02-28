@@ -22,7 +22,7 @@ class Board
 
     void loadPositionFile(string filename);
     void setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
-                   Int64 turnParts[]);
+                   Int64 turnParts[], Int64 stepsLeftParts[]);
 
     bool isFrozen(unsigned char index, unsigned char piece);
     bool hasFriends(unsigned char index, unsigned char piece);
@@ -61,6 +61,7 @@ class Board
 
     Int64 hashPieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
     Int64 hashTurnParts[MAX_COLORS];
+    Int64 hashStepsLeftParts[4];
 
     //hashes
     Int64 hash; //key that is used to access the entry

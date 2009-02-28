@@ -9,6 +9,7 @@
 #include <time.h>
 #include <fstream>
 #include <cstdlib>
+#include <iomanip>
 
 //different behavior modes
 #define MODE_NONE 0
@@ -39,6 +40,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
     //create the random hash parts
     Int64 pieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
     Int64 turnParts[MAX_COLORS];
+    Int64 stepsLeftParts[4];
 	for (int color = 0; color < MAX_COLORS; color++)
 	{
 		for (int type = 0; type < MAX_TYPES; type++)
@@ -52,8 +54,13 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
 		turnParts[color] = randInt64();
 	}
 
+    for (int i = 0; i < 4; i++)
+    {
+        stepsLeftParts[i] = randInt64();
+    }
+
     Board board;
-    board.setHashes(pieceParts, turnParts);
+    board.setHashes(pieceParts, turnParts, stepsLeftParts);
     board.loadPositionFile(positionFile);
 
     logFile << "Loaded file. Board state is:\n";
@@ -80,12 +87,34 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         short score;
         StepCombo pv;
         Search search(hashBits);
-        //search.loadHistory(moveFile, board.hashParts, board.lockParts);
         
-        StepCombo bestMove = search.searchRootAlphaBeta(board, maxDepth);
-               
-        logFile << "Finished Search. Stats are:\n";
-        logFile << search.getStatString() << endl;
+        StepCombo bestMove;
+
+        unsigned int totalMillis = 0;
+        unsigned int totalHashHits = 0;
+        unsigned int totalHashOverwrites = 0;
+        unsigned int totalNodesPerSec = 0;
+        //do search iteratively through depth to pump up hash tables and
+        //hopefully save nodes for larger depth searches.
+        logFile << setw(6) << "Depth" << setw(6) << "Score" << setw(11)
+                << "Nodes" << " PV" << endl;
+
+        for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
+        {
+            bestMove = search.searchRootAlphaBeta(board, currDepth);
+
+            logFile << search.getShortStatString() << endl;
+
+            totalMillis += search.millis;
+            totalHashHits += search.hashHits;
+            totalHashOverwrites += search.collisions;
+            totalNodesPerSec += search.totalNodesPerSec;
+        }
+        logFile << "Finished Search\n";
+        logFile << "Total Time: " << totalMillis << "ms\n";
+        logFile << "Hash Table Hits: " << totalHashHits << endl;
+        logFile << "Hash Colliding Overwrites: "<< totalHashOverwrites<< endl;       
+        logFile << "Avg Nodes/Sec: " << totalNodesPerSec / maxDepth << endl;
         logFile << "Playing Move " << bestMove.toString() << endl;
         cout << bestMove.toString() << endl;
     }

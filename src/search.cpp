@@ -9,6 +9,8 @@
 #include <string.h>
 #include <sstream>
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -107,8 +109,9 @@ StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
     for (int i = 0; i < pv.size(); ++i)
     {
         //stop when the step cost becomes 4, as that has to be the end
-        //of the player's turn. 
-        if (PVToPlay.stepCost == 4)
+        //of the player's turn. Also stop whenever something that is not
+        //a move is read.
+        if (PVToPlay.stepCost == 4 || pv[i] == string("<HT>"))
             break;
 
         StepCombo steps;
@@ -149,8 +152,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
 
     //check if there is a hash position of at least this depth
     int bestIndexFromHash = 0;
-    ScoreEntry thisEntry;
-    if (getScoreEntry(board,thisEntry))
+    ScoreEntry thisEntry;   
+    if (getScoreEntry(board,thisEntry, depth))
     {
         //exact bounds
         if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
@@ -260,7 +263,6 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
                 //Store the hash for this position and note a beta
                 //cutoff, that is: note that beta is a lower bound
                 addScoreEntry(board, SCORE_ENTRY_LOWER, beta, i, depth); 
-				ScoreEntry entry;
                 return beta;
             }
         }  
@@ -272,13 +274,11 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
         //is actually under alpha, so alpha is a upperbound
 
         addScoreEntry(board, SCORE_ENTRY_UPPER, alpha, bestIndex, depth);
-		ScoreEntry entry;
     }   
     else
     {
         //alpha is actually an exact value of the score
         addScoreEntry(board, SCORE_ENTRY_EXACT, alpha, bestIndex, depth);
-		ScoreEntry entry;
     }
         
     return alpha;
@@ -314,14 +314,16 @@ void Search :: addScoreEntry(Board& board, unsigned char scoreType,
 //entry is found in the hashtable, it is written in the given entry reference
 //and this function returns true. If not, false is returned
 //////////////////////////////////////////////////////////////////////////////
-bool Search :: getScoreEntry(Board& board, ScoreEntry& entry)
+bool Search :: getScoreEntry(Board& board, ScoreEntry& entry,
+                             unsigned int depth)
 {
     //get the entry from the array
     ScoreEntry thisEntry = scorehashes.getEntry(board.hash & scoreHashMask);
     
-    //check if the extra bits match
+    //check if the extra bits match and the depth is at least the one wanted
     if (thisEntry.isFilled() && 
-        thisEntry.getExtra() == (board.hash & scoreExtraHashMask))
+        thisEntry.getExtra() == (board.hash & scoreExtraHashMask) && 
+        thisEntry.getDepth() >= depth)
     {
         entry = thisEntry;
         return true;    
@@ -365,3 +367,23 @@ string Search :: getStatString()
 
     return out.str();
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//Returns a shorter version of the statisitic string which should fit in
+//one line. It will only tell the depth, score, nodes searched, and the pv
+//////////////////////////////////////////////////////////////////////////////
+string Search :: getShortStatString()
+{
+    if (lastSearchMode == SEARCH_NONE)
+        return string("");
+
+    stringstream out;
+
+    out << setw(6) << maxDepth << setw(6) << score << setw(11) 
+        << numTotalNodes;
+    for (int i = 0; i < pv.size(); ++i)
+        out << " " << pv[i];
+
+    return out.str();
+}
+

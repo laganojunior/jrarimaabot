@@ -13,7 +13,6 @@
 #include <assert.h>
 #include <string.h>
 
-
 class ScoreEntry
 {
     //data is packed into a 64 bit integer as follows:
@@ -27,7 +26,7 @@ class ScoreEntry
     //            cutoff
     //bit 27-31 : the depth this board was evaluated to
     //bit 32-63 : extra bits used to differentiate between boards that map
-    //            to the same hash key
+    //            to the same hash key 
 
     public:
     //inline functions////////////////////////////////////////////////////////
@@ -98,9 +97,6 @@ class ScoreEntry
              | (((Int64)moveIndex & 0xFF) << 19) 
              | (((Int64)depth & 0x1F) << 27) 
              | extra;
-
-		//cout << "data:\n";
-		//cout << Int64ToString(data) << endl;
     }
 
     private:

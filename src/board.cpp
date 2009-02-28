@@ -144,6 +144,7 @@ void Board :: loadPositionFile(string filename)
     }
 
     hash ^= hashTurnParts[sideToMove];
+    hash ^= hashStepsLeftParts[4];
 
     //attempt to play the stored steps
     stepsLeft = 4;
@@ -157,11 +158,12 @@ void Board :: loadPositionFile(string filename)
 //before the board is set in any way for hashes to be consistent
 //////////////////////////////////////////////////////////////////////////////
 void Board :: setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
-                        Int64 turnParts[])
+                        Int64 turnParts[], Int64 stepsLeftParts[])
 {
     memcpy(hashPieceParts,pieceParts,sizeof(Int64) * MAX_COLORS * MAX_TYPES
                                                    * NUM_SQUARES);
     memcpy(hashTurnParts, turnParts, sizeof(Int64) * MAX_COLORS);
+    memcpy(hashStepsLeftParts, stepsLeftParts, sizeof (Int64) * 4);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -285,7 +287,6 @@ bool Board :: samePieces(Board& comp)
                 return false;
         }
     }
-
     return true;
 }
 
@@ -322,8 +323,10 @@ void Board :: removePieceFromBoard(unsigned char index, unsigned char color,
 //////////////////////////////////////////////////////////////////////////////
 void Board :: playStep(Step step)
 {
+    hash ^= hashStepsLeftParts[stepsLeft];
     if (step.isPass())
     {
+
         --stepsLeft;
     }
     else if (step.isCapture())
@@ -342,6 +345,7 @@ void Board :: playStep(Step step)
         
         --stepsLeft;
     }
+    hash ^= hashStepsLeftParts[stepsLeft];
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -349,6 +353,7 @@ void Board :: playStep(Step step)
 //////////////////////////////////////////////////////////////////////////////
 void Board :: undoStep(Step step)
 {
+    hash ^= hashStepsLeftParts[stepsLeft];
     if (step.isPass())
     {
         ++stepsLeft;
@@ -369,6 +374,7 @@ void Board :: undoStep(Step step)
         
         ++stepsLeft;
     }
+    hash ^= hashStepsLeftParts[stepsLeft];
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -398,6 +404,9 @@ void Board :: changeTurn()
     hash ^= hashTurnParts[sideToMove];
     hash ^= hashTurnParts[oppColorOf(sideToMove)];
 
+    hash ^= hashStepsLeftParts[stepsLeft];
+    hash ^= hashStepsLeftParts[4];
+
     //set state to new turn
     stepsLeft = 4;
     sideToMove = oppColorOf(sideToMove);
@@ -416,6 +425,8 @@ void Board :: unchangeTurn(unsigned int oldStepsLeft)
     //update the hashes
     hash ^= hashTurnParts[sideToMove];
     hash ^= hashTurnParts[oppColorOf(sideToMove)];
+    hash ^= hashStepsLeftParts[4];
+    hash ^= hashStepsLeftParts[oldStepsLeft];
 }
 
 //////////////////////////////////////////////////////////////////////////////

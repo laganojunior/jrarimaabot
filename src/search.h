@@ -26,18 +26,13 @@ class Search //Note: This class is not copyable, due to HashTable.
                               short beta, vector<string>& nodePV, 
                               Board& refer);
 
-    /*void addToHistory(Board& board);
-    void removeFromHistory(Board& board);
-    bool isInHistory(Board& board);
-    void loadHistory(string filename, 
-                     Int64 hashparts[][MAX_TYPES][NUM_SQUARES],
-                     Int64 lockparts[][MAX_TYPES][NUM_SQUARES]);*/
-
     void addScoreEntry(Board& board, unsigned char scoreType, short score,
                        unsigned char bestMoveIndex, unsigned int depth);
-    bool getScoreEntry(Board& board, ScoreEntry& entry);
+    bool getScoreEntry(Board& board, ScoreEntry& entry, 
+                       unsigned int depth);
 
     string getStatString();
+    string getShortStatString();
 
     int lastSearchMode; //the last search algorithm used in searching, used
                         //when displaying statistics as certain stats don't
