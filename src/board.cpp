@@ -18,7 +18,7 @@ using namespace std;
 //Basic constructor, basically initializes an empty board, and initializes
 //the hash parts for the hashes and locks
 //////////////////////////////////////////////////////////////////////////////
-Board :: Board(int numHashBits)
+Board :: Board()
 {
     //zero out the bitboards, could use memset for this, but for now I'll
     //be more explicit
@@ -33,37 +33,6 @@ Board :: Board(int numHashBits)
     sideToMove = GOLD;
     stepsLeft = 4;
     turnNumber = 1;
-
-    //make the hash parts
-    Int64 hashMask = 0, lockMask = 0;
-    for (int i = 0; i < numHashBits; ++i)
-    {
-        hashMask |= Int64FromIndex(i);
-    }
-
-    for (int i = 0; i < HASH_LOCK_BITS; ++i)
-    {
-        lockMask |= Int64FromIndex(i);
-    }
-
-    for (int color = 0; color < MAX_COLORS; ++ color)
-    {
-        for (int piece = 0; piece < MAX_TYPES; ++piece)
-        {       
-            for (int square = 0; square < NUM_SQUARES; ++square)
-            {
-            
-                hashParts[color][piece][square] = randInt64() & hashMask;
-                lockParts[color][piece][square] = randInt64() & lockMask;
-            }
-        }
-
-        hashTurnParts[color] = randInt64() & hashMask;
-        lockTurnParts[color] = randInt64() & lockMask;        
-    }
-
-    hash = 0;
-    lock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -91,7 +60,6 @@ void Board :: loadPositionFile(string filename)
               << "Could not open file: "
               << filename << "\n";
         throw error;
-
     }
 
     string line;
@@ -152,7 +120,6 @@ void Board :: loadPositionFile(string filename)
     }
 
     hash = 0;
-    lock = 0;
 
     //read the next 8 lines to read the board
     for (int i = 0; i < 8; i++)
@@ -177,13 +144,24 @@ void Board :: loadPositionFile(string filename)
     }
 
     hash ^= hashTurnParts[sideToMove];
-    lock ^= lockTurnParts[sideToMove];
 
     //attempt to play the stored steps
     stepsLeft = 4;
     playCombo(initSteps);
 
     in.close();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Sets the hash parts for use in creating hashes. Note this should be called
+//before the board is set in any way for hashes to be consistent
+//////////////////////////////////////////////////////////////////////////////
+void Board :: setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
+                        Int64 turnParts[])
+{
+    memcpy(hashPieceParts,pieceParts,sizeof(Int64) * MAX_COLORS * MAX_TYPES
+                                                   * NUM_SQUARES);
+    memcpy(hashTurnParts, turnParts, sizeof(Int64) * MAX_COLORS);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -324,8 +302,7 @@ void Board :: writePieceOnBoard(unsigned char index, unsigned char color,
     pieces[color][type] |= Int64FromIndex(index);
     
     //update the hashes
-    hash ^= hashParts[color][type][index];
-    lock ^= lockParts[color][type][index];
+    hash ^= hashPieceParts[color][type][index];
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -337,8 +314,7 @@ void Board :: removePieceFromBoard(unsigned char index, unsigned char color,
 {
     pieces[color][type] ^= Int64FromIndex(index);
 
-    hash ^= hashParts[color][type][index];
-    lock ^= lockParts[color][type][index];
+    hash ^= hashPieceParts[color][type][index];
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -421,8 +397,6 @@ void Board :: changeTurn()
     //update the hashes
     hash ^= hashTurnParts[sideToMove];
     hash ^= hashTurnParts[oppColorOf(sideToMove)];
-    lock ^= lockTurnParts[sideToMove];
-    lock ^= lockTurnParts[oppColorOf(sideToMove)];
 
     //set state to new turn
     stepsLeft = 4;
@@ -442,8 +416,6 @@ void Board :: unchangeTurn(unsigned int oldStepsLeft)
     //update the hashes
     hash ^= hashTurnParts[sideToMove];
     hash ^= hashTurnParts[oppColorOf(sideToMove)];
-    lock ^= lockTurnParts[sideToMove];
-    lock ^= lockTurnParts[oppColorOf(sideToMove)];
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -15,12 +15,14 @@ using namespace std;
 class Board
 {
     public:
-    Board(int numHashBits);
+    Board();
     ~Board();
     
     //functions///////////////////////////////////////////////////////////////
 
     void loadPositionFile(string filename);
+    void setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
+                   Int64 turnParts[]);
 
     bool isFrozen(unsigned char index, unsigned char piece);
     bool hasFriends(unsigned char index, unsigned char piece);
@@ -57,16 +59,11 @@ class Board
     //index is piece type
     Int64 pieces[MAX_COLORS][MAX_TYPES];
 
-    //parts for each piece to contribute to the hashes
-    Int64 hashParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
-    Int64 lockParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
-    Int64 hashTurnParts[MAX_COLORS]; //hash to apply depending on which side
-                                     //is to move
-    Int64 lockTurnParts[MAX_COLORS];
+    Int64 hashPieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
+    Int64 hashTurnParts[MAX_COLORS];
 
     //hashes
     Int64 hash; //key that is used to access the entry
-    Int64 lock; //the extra bits in the entry to further match
                        
 
     unsigned char sideToMove; //current player to move

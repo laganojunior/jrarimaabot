@@ -5,6 +5,7 @@
 
 #include "board.h"
 #include "step.h"
+#include "hash.h"
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@ using namespace std;
 class Search //Note: This class is not copyable, due to HashTable.
 {
     public:
-    Search(int numHashBits);
+    Search(int numScoreHashBits);
     ~Search();
 
     StepCombo searchRootAlphaBeta(Board& board, int depth);
@@ -25,15 +26,16 @@ class Search //Note: This class is not copyable, due to HashTable.
                               short beta, vector<string>& nodePV, 
                               Board& refer);
 
-    void addToHistory(Board& board);
+    /*void addToHistory(Board& board);
     void removeFromHistory(Board& board);
     bool isInHistory(Board& board);
     void loadHistory(string filename, 
-                     Int64 hashparts[][MAX_TYPES][NUM_SQUARES], 
-                     Int64 lockparts[][MAX_TYPES][NUM_SQUARES]);
+                     Int64 hashparts[][MAX_TYPES][NUM_SQUARES],
+                     Int64 lockparts[][MAX_TYPES][NUM_SQUARES]);*/
 
-    void addScoreEntry(Board& board, short upper, short lower,
+    void addScoreEntry(Board& board, unsigned char scoreType, short score,
                        unsigned char bestMoveIndex, unsigned int depth);
+    bool getScoreEntry(Board& board, ScoreEntry& entry);
 
     string getStatString();
 
@@ -56,7 +58,10 @@ class Search //Note: This class is not copyable, due to HashTable.
 
     vector<string> pv; //the principal variation
 
-    HashTable hashes; //a hash table to keep history and transposition data.
+    //a hash table to keep transposition data.
+    HashTable<ScoreEntry> scorehashes;
+    Int64 scoreHashMask;
+    Int64 scoreExtraHashMask;
 };
 
 #endif

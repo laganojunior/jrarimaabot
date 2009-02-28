@@ -36,7 +36,24 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
             << "Move file " << moveFile << endl
             << "Gamestate file " << gamestateFile << endl; 
 
-    Board board(hashBits);
+    //create the random hash parts
+    Int64 pieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
+    Int64 turnParts[MAX_COLORS];
+	for (int color = 0; color < MAX_COLORS; color++)
+	{
+		for (int type = 0; type < MAX_TYPES; type++)
+		{
+			for (int square = 0; square < NUM_SQUARES; square++)
+			{
+				pieceParts[color][type][square] = randInt64();
+			}
+		}
+		
+		turnParts[color] = randInt64();
+	}
+
+    Board board;
+    board.setHashes(pieceParts, turnParts);
     board.loadPositionFile(positionFile);
 
     logFile << "Loaded file. Board state is:\n";
@@ -63,8 +80,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         short score;
         StepCombo pv;
         Search search(hashBits);
-        search.loadHistory(moveFile, board.hashParts, board.lockParts);
-
+        //search.loadHistory(moveFile, board.hashParts, board.lockParts);
         
         StepCombo bestMove = search.searchRootAlphaBeta(board, maxDepth);
                
@@ -127,7 +143,7 @@ int main(int argc, char * args[])
             else if (string(args[i]) == string("--genmoves"))
             {
                 mode = MODE_NONE;
-                Board board(1);
+                Board board;
                 positionFile = args[i+1];
                 board.loadPositionFile(positionFile);
 
@@ -143,7 +159,9 @@ int main(int argc, char * args[])
             }
             else if (string(args[i]) == string("--test"))
             {
-                mode = MODE_NONE;
+				mode = MODE_NONE;
+                
+				
             }
 
             //ignore any other flags

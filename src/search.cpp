@@ -14,11 +14,25 @@ using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
 //Constructor. Basically set last search mode to none and initialize the 
-//hash table to the number of bits
+//hash tables to the number of bits
 //////////////////////////////////////////////////////////////////////////////
-Search :: Search(int numHashBits) : hashes(numHashBits)
+Search :: Search(int scoreHashBits)
 {
     lastSearchMode = SEARCH_NONE;
+
+    scorehashes.init(Int64FromIndex(scoreHashBits));
+    scoreHashMask = 0;
+    scoreExtraHashMask = 0;
+
+    //create masks. Note that masks for hash keys are done from the least
+    //signficant bit, but masks for extra bits are done the other way
+    for (int i = 0; i < scoreHashBits; i++)
+        scoreHashMask |= Int64FromIndex(i);
+
+    for (int i = 0; i < SCORE_ENTRY_EXTRA_BITS; i++)
+    {
+        scoreExtraHashMask |= Int64FromIndex(63 - i);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -135,25 +149,22 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
 
     //check if there is a hash position of at least this depth
     int bestIndexFromHash = 0;
-    HashTableEntry thisEntry = hashes.getEntry(board.hash);
-    if (board.lock == thisEntry.getLock() && depth <= thisEntry.getDepth()
-        && thisEntry.hasScores())
+    ScoreEntry thisEntry;
+    if (getScoreEntry(board,thisEntry))
     {
-        short upper = thisEntry.getUpperBound();
-        short lower = thisEntry.getLowerBound();
-
         //exact bounds
-        if (upper == lower)                            
+        if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
         {
             nodePV.resize(1);
             nodePV[0] = "<HT>";
             hashHits++;
             ++numTerminalNodes;
-            return lower;
+            return thisEntry.getScore();
         }
 
         //upper bound cutoff
-        if (upper <= alpha)
+        if (thisEntry.getScoreType() == SCORE_ENTRY_UPPER
+            && thisEntry.getScore() <= alpha)
         {
             nodePV.resize(1);
             nodePV[0] = "<HT>";
@@ -163,7 +174,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
         }
 
         //lower bound cutoff
-        if (lower >= beta)
+        if (thisEntry.getScoreType() == SCORE_ENTRY_LOWER
+            && thisEntry.getScore() >= beta)
         {
             nodePV.resize(1);
             nodePV[0] = "<HT>";
@@ -201,7 +213,6 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
             continue;
         }
         
-        
         vector<string> thisPV;
         short nodeScore;
         
@@ -220,17 +231,6 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
             unsigned char oldnumsteps = board.stepsLeft;
             board.changeTurn();
 
-            //check if board position is in the history, if so, do not 
-            //consider passing the turn
-            if (isInHistory(board))
-            {
-                board.undoCombo(combos[i]);  
-                continue;
-            }
-
-            //update the history to include this board state
-            addToHistory(board);
-
             //set new refer state to this one
             Board newRefer = board;
 
@@ -238,12 +238,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
             nodeScore = -searchNodeAlphaBeta(board, depth - combos[i].stepCost
                                             ,-beta, -alpha, thisPV, newRefer);
 
-            //then remove this board from the history
-            removeFromHistory(board);
-
             //revert state back
             board.unchangeTurn(oldnumsteps);
-
         }
 
         board.undoCombo(combos[i]);       
@@ -263,7 +259,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
             {   
                 //Store the hash for this position and note a beta
                 //cutoff, that is: note that beta is a lower bound
-                addScoreEntry(board, 30000, beta, i, depth); 
+                addScoreEntry(board, SCORE_ENTRY_LOWER, beta, i, depth); 
+				ScoreEntry entry;
                 return beta;
             }
         }  
@@ -274,17 +271,19 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
         //if alpha remains unchanged, then it might be that the true value
         //is actually under alpha, so alpha is a upperbound
 
-        addScoreEntry(board, alpha, -30000, bestIndex, depth);
+        addScoreEntry(board, SCORE_ENTRY_UPPER, alpha, bestIndex, depth);
+		ScoreEntry entry;
     }   
     else
     {
         //alpha is actually an exact value of the score
-        addScoreEntry(board, alpha, alpha, bestIndex, depth);
+        addScoreEntry(board, SCORE_ENTRY_EXACT, alpha, bestIndex, depth);
+		ScoreEntry entry;
     }
         
     return alpha;
 }
-
+/*
 //////////////////////////////////////////////////////////////////////////////
 //adds a board to the history
 //////////////////////////////////////////////////////////////////////////////
@@ -460,32 +459,52 @@ void Search :: loadHistory(string filename,
     }
 
     file.close();
-}
+}*/
 
 //////////////////////////////////////////////////////////////////////////////
-//Attempts to write a entry into the hash table for score purposes. Will 
-//only overwrite an entry if the depth is at least the depth of the current
-//entry and the current entry is not for history
+//Attempts to write a entry into the score hash table. Only overwrite the 
+//current entry if the depth is at least as much as the one already in the
+//table
 //////////////////////////////////////////////////////////////////////////////
-void Search :: addScoreEntry(Board& board, short upper, short lower,
+void Search :: addScoreEntry(Board& board, unsigned char scoreType,
+                            short score,
                             unsigned char bestMoveIndex, unsigned int depth)
 {
-    HashTableEntry& entry = hashes.getEntry(board.hash);
+    ScoreEntry& entry = scorehashes.getEntry(board.hash & scoreHashMask);
 
-    if (entry.getDepth() <= depth)
+    if (!entry.isFilled() || entry.getDepth() <= depth)
     {
         //check for a collision
-        if (entry.getLock() != board.lock)  
+        if (entry.isFilled() && 
+            entry.getExtra() != (board.hash & scoreExtraHashMask))  
         {
-            if (entry.isHistory()) //do not overwrite history  
-                return;
-                    
             collisions++; 
         }
 
-        entry.set(true, isInHistory(board), upper, lower, bestMoveIndex, 
-                  depth, board.lock); 
+        entry.set(true, scoreType, score, bestMoveIndex, 
+                  depth, board.hash & scoreExtraHashMask); 
     }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Attempts to get a board's entry from the score hash table. If the board's
+//entry is found in the hashtable, it is written in the given entry reference
+//and this function returns true. If not, false is returned
+//////////////////////////////////////////////////////////////////////////////
+bool Search :: getScoreEntry(Board& board, ScoreEntry& entry)
+{
+    //get the entry from the array
+    ScoreEntry thisEntry = scorehashes.getEntry(board.hash & scoreHashMask);
+    
+    //check if the extra bits match
+    if (thisEntry.isFilled() && 
+        thisEntry.getExtra() == (board.hash & scoreExtraHashMask))
+    {
+        entry = thisEntry;
+        return true;    
+    }
+
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////
