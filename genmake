@@ -105,8 +105,8 @@ for index,s in enumerate(sources):
     print "Getting Dependencies\n"
     dependencies = [string.join([s,sources_suffix[index]],".")]
     getDependencies(dependencies[0],dependencies)
-    for index, d in enumerate(dependencies):
-        dependencies[index] = string.join(["src/",d],"")
+    for i, d in enumerate(dependencies):
+        dependencies[i] = string.join(["src/",d],"")
     
     # Write the release target
     print >> makefile , "obj/%s.o: %s" % (s,string.join(dependencies," "))
