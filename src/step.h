@@ -118,6 +118,24 @@ class StepCombo
 
     unsigned short stepCost; //number of actual steps that this combo takes,
                              //note that captures do not count.
+
+    bool hasFriendlyCapture; //set to true if this combo involves a piece
+                             //of the player moving being captured
+
+    unsigned char friendlyCaptureType; //if the above is set to true, this
+                                       //is set to the type of piece being
+                                       //captured
+    
+    bool hasEnemyCapture; //set to true if this combo involves a piece of
+                          //player not moving being captured
+
+    unsigned char enemyCaptureType;    //if the above is set to true, this
+                                       //is set to the type of piece being
+                                       //captured
+
+    short score; //a heurisitic score used for move ordering. Has nothing
+                 //to do with scores used in scoring boards and solving the
+                 //game tree.
 };
 
 #endif
