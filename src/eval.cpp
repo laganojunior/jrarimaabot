@@ -121,3 +121,39 @@ bool Eval :: isWin(Board& board, unsigned char color)
     else
         return board.pieces[SILVER][RABBIT] & getRow(7);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//gives the combo in the array some heurisitic scores to see which order the
+//moves should be considered in. The bestIndex variable should be set to the
+//index referenced by the hashtable if there are any, if one does not
+//wish to provide one, it should be set to -1
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: scoreCombos(StepCombo combos[], int num, 
+                        unsigned char color, int bestIndex)
+{
+    for (int i = 0; i < num; ++i)
+    {
+        combos[i].score = 0;
+
+        //give moves some score based on captures, note that pieces are
+        //numerically ordered with ELEPHANT being 0, and RABBIT being 5, so
+        //to give a sensical score in respect to type, value should reversed
+        //in respect to these numbers
+
+        if (combos[i].hasFriendlyCapture)
+        {
+            combos[i].score -= 100 * 
+                               (MAX_TYPES - combos[i].friendlyCaptureType);
+        } 
+        
+        if (combos[i].hasEnemyCapture)
+        {
+            combos[i].score += 100 * 
+                               (MAX_TYPES - combos[i].enemyCaptureType);
+        }
+    }
+
+    //give some bonus to the purported best move
+    if (bestIndex != -1)
+        combos[bestIndex].score  += 10000;
+}

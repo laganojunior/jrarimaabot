@@ -650,18 +650,30 @@ unsigned int Board :: genMoves(StepCombo combos[])
                 {
                     step.genCapture(piece, captureSquare[from]);
                     combos[numCombos].addStep(step);
+
+                    //note that piece is captured for scoring purposes
+                    combos[numCombos].hasFriendlyCapture = true;
+                    combos[numCombos].friendlyCaptureType = type;                    
                 }
-        
-                if (leadsToCapture[from])
+                else if (leadsToCapture[from])
                 {
                     step.genCapture(pieceCaptured[from], captureSquare[from]);
                     combos[numCombos].addStep(step);
+
+                    //note that piece is captured for scoring purposes
+                    combos[numCombos].hasFriendlyCapture = true;
+                    combos[numCombos].friendlyCaptureType 
+                                       = typeOfPiece(pieceCaptured[from]);
                 }
+                else
+                    combos[numCombos].hasFriendlyCapture = false;
                 
                 StepCombo prefix = combos[numCombos]; //keep this combo 
                                                       //to prefix pulls.
 
-                ++numCombos;
+                ++numCombos;//note that piece is captured for scoring purposes
+                    combos[numCombos].hasFriendlyCapture = true;
+                    combos[numCombos].friendlyCaptureType = type; 
 
                 //write pulls for every lower neighbor. Keep a copy of the
                 //bitboard as it is used again for pushes.
@@ -693,15 +705,26 @@ unsigned int Board :: genMoves(StepCombo combos[])
                                             captureSquare[lowerSquare]);
 
                             combos[numCombos].addStep(step);
-                        }
 
-                        if (leadsToCapture[lowerSquare])
+                            //note that piece is captured for scoring purposes
+                            combos[numCombos].hasEnemyCapture = true;
+                            combos[numCombos].enemyCaptureType 
+                                              = typeOfPiece(lowerPiece); 
+                        }
+                        else if (leadsToCapture[lowerSquare])
                         {
                             step.genCapture(pieceCaptured[lowerSquare], 
                                             captureSquare[lowerSquare]);
 
                             combos[numCombos].addStep(step);
+
+                            //note that piece is captured for scoring purposes
+                            combos[numCombos].hasEnemyCapture = true;
+                            combos[numCombos].enemyCaptureType 
+                                    = typeOfPiece(pieceCaptured[lowerSquare]); 
                         }
+                        else
+                            combos[numCombos].hasEnemyCapture = false;
                     
                         numCombos++;
                     }
@@ -747,15 +770,28 @@ unsigned int Board :: genMoves(StepCombo combos[])
                                             captureSquare[lowerSquare]);
 
                             combos[numCombos].addStep(step);
-                        }
 
-                        if (leadsToCapture[lowerSquare])
+                            //note that piece is captured for scoring purposes
+                            combos[numCombos].hasEnemyCapture = true;
+                            combos[numCombos].enemyCaptureType 
+                                              = typeOfPiece(lowerPiece); 
+                              
+                        }
+                        else if (leadsToCapture[lowerSquare])
                         {
                             step.genCapture(pieceCaptured[lowerSquare], 
                                             captureSquare[lowerSquare]);
 
                             combos[numCombos].addStep(step);
+
+                            //note that piece is captured for scoring purposes
+                            combos[numCombos].hasEnemyCapture = true;
+                            combos[numCombos].enemyCaptureType 
+                                    = typeOfPiece(pieceCaptured[lowerSquare]); 
                         }
+                        else
+                            combos[numCombos].hasEnemyCapture = false;                            
+                        
 
                         //complete the push by moving onto the square the
                         //enemy piece was pushed from
@@ -767,14 +803,24 @@ unsigned int Board :: genMoves(StepCombo combos[])
                         {
                             step.genCapture(piece, captureSquare[from]);
                             combos[numCombos].addStep(step);
+    
+                            //note that piece is captured for scoring purposes
+                            combos[numCombos].hasFriendlyCapture = true;
+                            combos[numCombos].friendlyCaptureType = type; 
                         }
-                
-                        if (leadsToCapture[from])
+                        else if (leadsToCapture[from])
                         {
                             step.genCapture(pieceCaptured[from], 
                             captureSquare[from]);
                             combos[numCombos].addStep(step);
+
+                            //note that piece is captured for scoring purposes
+                            combos[numCombos].hasFriendlyCapture = true;
+                            combos[numCombos].friendlyCaptureType 
+                                       = typeOfPiece(pieceCaptured[from]);
                         }
+                        else
+                            combos[numCombos].hasFriendlyCapture = false;
 
                         ++numCombos;
                     }
@@ -954,4 +1000,4 @@ ostream& operator<<(ostream& out, Board b)
     out << "   a b c d e f g h\n";
 
     return out;
-}
+}                    
