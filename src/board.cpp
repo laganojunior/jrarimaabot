@@ -923,13 +923,24 @@ unsigned int Board :: genMoves(StepCombo combos[])
             {
                 step.genCapture(piece, captureSquare[from]);
                 combos[numCombos].addStep(step);
+
+                //note that piece is captured for scoring purposes
+                combos[numCombos].hasFriendlyCapture = true;
+                combos[numCombos].friendlyCaptureType = RABBIT;   
             }
-    
-            if (leadsToCapture[from])
+            else if (leadsToCapture[from])
             {
                 step.genCapture(pieceCaptured[from], captureSquare[from]);
                 combos[numCombos].addStep(step);
+
+                //note that piece is captured for scoring purposes
+                combos[numCombos].hasFriendlyCapture = true;
+                combos[numCombos].friendlyCaptureType = 
+                                             typeOfPiece(pieceCaptured[from]);   
             }
+            else
+                combos[numCombos].hasFriendlyCapture = false;                
+
             ++numCombos;
         }
     }
@@ -943,7 +954,10 @@ unsigned int Board :: genMoves(StepCombo combos[])
         
         combos[numCombos].addStep(step);
     } 
+    combos[numCombos].hasFriendlyCapture = false;
+    combos[numCombos].hasEnemyCapture = false;
     ++numCombos;
+
 
     return numCombos;
 }

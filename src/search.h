@@ -36,6 +36,8 @@ class Search //Note: This class is not copyable, due to HashTable.
     bool getScoreEntry(Board& board, ScoreEntry& entry, 
                        unsigned int depth);
 
+    unsigned int getNextBestCombo(unsigned int ply);
+
     string getStatString();
     string getShortStatString();
 
@@ -65,10 +67,11 @@ class Search //Note: This class is not copyable, due to HashTable.
 
     //keep pre-made arrays for storing moves at each ply, so that the
     //constructors/deconstructors aren't called so much
-    StepCombo combos[SEARCH_MAX_DEPTH][SEARCH_MAX_COMBOS_PER_PLY];
+    StepCombo combos[SEARCH_MAX_DEPTH][SEARCH_MAX_COMBOS_PER_PLY];  
+    unsigned int numCombos[SEARCH_MAX_DEPTH];
 
     //Eval instance to score stuff
     Eval eval;
 };
 
-#endif
+#endif   

@@ -15,6 +15,12 @@ class Eval
 
     void scoreCombos(StepCombo combos[], int num, unsigned char color,
                      int bestIndex); 
+
+    //array used to keep track of whenever a piece is moved from one
+    //place to another in a certain ply, if the move causes a beta cut-off.
+    //used for move scoring, as it might that in similar plies, similar
+    //moves will also be moves that terminate that tree.
+    unsigned char killermove[NUM_SQUARES][NUM_SQUARES][MAX_COLORS];
 };
 
 #endif
