@@ -6,6 +6,7 @@
 #include "board.h"
 #include "step.h"
 #include "hash.h"
+#include "eval.h"
 #include <string>
 #include <vector>
 
@@ -65,6 +66,9 @@ class Search //Note: This class is not copyable, due to HashTable.
     //keep pre-made arrays for storing moves at each ply, so that the
     //constructors/deconstructors aren't called so much
     StepCombo combos[SEARCH_MAX_DEPTH][SEARCH_MAX_COMBOS_PER_PLY];
+
+    //Eval instance to score stuff
+    Eval eval;
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include "step.h"
 #include "piece.h"
 #include "square.h"
+#include "eval.h"
 #include <fstream>
 #include <time.h>
 #include <string.h>
@@ -93,7 +94,7 @@ StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
             pv.resize(0);
             pv.insert(pv.begin(), combos[depth][i].toString());
             pv.insert(pv.begin()+1, nodePV.begin(), nodePV.end());
-        }  
+        }//check if this is a winning position  
     }
 
     //stop timing now
@@ -135,7 +136,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
 
     ++numTotalNodes; //count the node as explored
 
-    if (board.isWin(board.sideToMove)) //check if this is a winning position
+    //check if this is a winning position
+    if (eval.isWin(board, board.sideToMove)) 
     {
         ++numTerminalNodes; //node is terminal
 
@@ -146,7 +148,7 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
     {
         ++numTerminalNodes; //this node is terminal
 
-        return board.eval(board.sideToMove);
+        return eval.evalBoard(board, board.sideToMove);
     }
 
     //check if there is a hash position of at least this depth
