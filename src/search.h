@@ -1,7 +1,7 @@
 #ifndef __JR_SEARCH_H__
 #define __JR_SEARCH_H__
 
-//game tree search manager. Has algorithms for different types of searches
+//game tree search manager
 
 #include "board.h"
 #include "step.h"
