@@ -436,7 +436,7 @@ string Search :: getShortStatString()
     stringstream out;
 
     out << setw(6) << maxDepth << setw(6) << score << setw(11) 
-        << numTotalNodes;
+        << numTotalNodes << setw(10) << millis;
     for (int i = 0; i < pv.size(); ++i)
         out << " " << pv[i];
 
