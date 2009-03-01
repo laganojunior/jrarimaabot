@@ -142,15 +142,20 @@ void Eval :: scoreCombos(StepCombo combos[], int num,
 
         if (combos[i].hasFriendlyCapture)
         {
-            combos[i].score -= 100 * 
+            combos[i].score -= 50 * 
                                (MAX_TYPES - combos[i].friendlyCaptureType);
         } 
         
         if (combos[i].hasEnemyCapture)
         {
-            combos[i].score += 100 * 
+            combos[i].score += 50 * 
                                (MAX_TYPES - combos[i].enemyCaptureType);
         }
+
+        //give some score for killer moves
+        combos[i].score += killermove[combos[i].steps[0].getFrom()] 
+                                     [combos[i].steps[0].getTo()]
+                                     [color] * 10;
     }
 
     //give some bonus to the purported best move

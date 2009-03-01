@@ -220,8 +220,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
     for (int i = 0; i < numCombos[ply]; ++i) 
     {
         //get the next best combo to look at
-        unsigned int nextIndex = getNextBestCombo(ply);
-        //unsigned int nextIndex = i;
+        //unsigned int nextIndex = getNextBestCombo(ply);
+        unsigned int nextIndex = i;
 
         board.playCombo(combos[ply][nextIndex]);  
 
@@ -282,6 +282,17 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
                 //Store the hash for this position and note a beta
                 //cutoff, that is: note that beta is a lower bound
                 addScoreEntry(board, SCORE_ENTRY_LOWER, beta, i, depth); 
+
+                //give the killer score for this type of move an increase
+                //depending on the depth to go of this search.
+                if (eval.killermove[combos[ply][i].steps[0].getFrom()]
+                                   [combos[ply][i].steps[0].getTo()]
+                                   [board.sideToMove] + depth <= 255)
+
+                    eval.killermove[combos[ply][i].steps[0].getFrom()]
+                                   [combos[ply][i].steps[0].getTo()]
+                                   [board.sideToMove] += depth;
+                    
                 return beta;
             }
         }  
