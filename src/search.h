@@ -10,10 +10,6 @@
 #include <string>
 #include <vector>
 
-//search mode types
-#define SEARCH_NONE      0
-#define SEARCH_ALPHABETA 1
-
 //some limiting constants
 #define SEARCH_MAX_DEPTH 20
 #define SEARCH_MAX_COMBOS_PER_PLY 120
@@ -26,8 +22,8 @@ class Search //Note: This class is not copyable, due to HashTable.
     Search(int numScoreHashBits);
     ~Search();
 
-    StepCombo searchRootAlphaBeta(Board& board, int depth);
-    short searchNodeAlphaBeta(Board& board, int depth, short alpha,  
+    StepCombo searchRoot(Board& board, int depth);
+    short searchNode(Board& board, int depth, short alpha,  
                               short beta, vector<string>& nodePV, 
                               Board& refer);
 
@@ -40,10 +36,6 @@ class Search //Note: This class is not copyable, due to HashTable.
 
     string getStatString();
     string getShortStatString();
-
-    int lastSearchMode; //the last search algorithm used in searching, used
-                        //when displaying statistics as certain stats don't
-                        //make sense for some algorithms
 
     unsigned int numTerminalNodes; //number of terminal nodes explored
     unsigned int numTotalNodes;    //number of all nodes explored

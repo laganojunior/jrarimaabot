@@ -101,7 +101,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
 
         for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
         {
-            bestMove = search.searchRootAlphaBeta(board, currDepth);
+            bestMove = search.searchRoot(board, currDepth);
 
             logFile << search.getShortStatString() << endl;
 

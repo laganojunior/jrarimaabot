@@ -21,7 +21,6 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////
 Search :: Search(int scoreHashBits)
 {
-    lastSearchMode = SEARCH_NONE;
 
     scorehashes.init(Int64FromIndex(scoreHashBits));
     scoreHashMask = 0;
@@ -52,13 +51,12 @@ Search :: ~Search()
 
 //////////////////////////////////////////////////////////////////////////////
 //Resets all relevant search stats and starts a search on the given board
-//as the root node to the given depth using a alphabeta search and returns
+//as the root node to the given depth using a search and returns
 //the best combo for the player to move.
 //////////////////////////////////////////////////////////////////////////////
-StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
+StepCombo Search :: searchRoot(Board& board, int depth)
 {
     //reset search statistics
-    lastSearchMode = SEARCH_ALPHABETA;
     numTerminalNodes = 0;
     numTotalNodes = 0;
     millis = 0;
@@ -86,9 +84,9 @@ StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
 
         vector<string> nodePV;
 
-        short nodeScore = searchNodeAlphaBeta(board, 
-                                           depth - combos[0][i].stepCost, 
-                                              score, 30000, nodePV, refer);
+        short nodeScore = searchNode(board, 
+                                     depth - combos[0][i].stepCost, 
+                                     score, 30000, nodePV, refer);
 
         board.undoCombo(combos[0][i]);
 
@@ -128,14 +126,13 @@ StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//runs an alpha beta search on the given board to the given depth and returns
+//runs a search on the given board to the given depth and returns
 //the solved score of this node and writes the principal variation from this
 //node to nodePV. The refer board is the state of the board at the beginning
 //of the turn, so don't go down paths that repeat that state
 //////////////////////////////////////////////////////////////////////////////
-short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha, 
-                                    short beta, vector<string>& nodePV,
-                                    Board& refer)
+short Search :: searchNode(Board& board, int depth, short alpha, 
+                           short beta, vector<string>& nodePV, Board& refer)
 {   
 
     ++numTotalNodes; //count the node as explored
@@ -238,9 +235,9 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
         if (board.stepsLeft != 0)
         {
             //steps remaining, keep searching within this player's turn
-            nodeScore = searchNodeAlphaBeta(board, 
-                                      depth - combos[ply][nextIndex].stepCost, 
-                                      alpha, beta, thisPV, refer);
+            nodeScore = searchNode(board, 
+                                   depth - combos[ply][nextIndex].stepCost, 
+                                   alpha, beta, thisPV, refer);
         }
         else
         {
@@ -254,9 +251,9 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
             Board newRefer = board;
 
             //search through opponent's turn
-            nodeScore = -searchNodeAlphaBeta(board, 
-                                       depth - combos[ply][nextIndex].stepCost
-                                       ,-beta, -alpha, thisPV, newRefer);
+            nodeScore = -searchNode(board, 
+                                    depth - combos[ply][nextIndex].stepCost,
+                                    -beta, -alpha, thisPV, newRefer);
 
             //revert state back
             board.unchangeTurn(oldnumsteps);
@@ -395,31 +392,19 @@ string Search :: getStatString()
 {
     stringstream out;
 
-    switch (lastSearchMode)
-    {
-        case SEARCH_ALPHABETA:
-        {
-            out << "Depth: " << maxDepth << endl
-                << "Terminal Nodes: " << numTerminalNodes << endl
-                << "Total Nodes: " <<  numTotalNodes << endl
-                << "Time Taken: " << millis << "ms\n"
-                << "Nodes/Sec: " << totalNodesPerSec << endl
-                << "Score: " << score << endl
-                << "Hash Table Hits: " << hashHits << endl
-                << "Hash Table Collisions: " << collisions << endl;
+    out << "Depth: " << maxDepth << endl
+        << "Terminal Nodes: " << numTerminalNodes << endl
+        << "Total Nodes: " <<  numTotalNodes << endl
+        << "Time Taken: " << millis << "ms\n"
+        << "Nodes/Sec: " << totalNodesPerSec << endl
+        << "Score: " << score << endl
+        << "Hash Table Hits: " << hashHits << endl
+        << "Hash Table Collisions: " << collisions << endl;
 
-            out << "PV:";
-            for (int i = 0; i < pv.size(); ++i)
-                out << " " << pv[i];
-            out << endl;
-
-        }break;
-
-        case SEARCH_NONE:
-        {
-            out << "No Search Done\n";  
-        }break;
-    }
+    out << "PV:";
+    for (int i = 0; i < pv.size(); ++i)
+        out << " " << pv[i];
+    out << endl;
 
     return out.str();
 }
@@ -430,9 +415,6 @@ string Search :: getStatString()
 //////////////////////////////////////////////////////////////////////////////
 string Search :: getShortStatString()
 {
-    if (lastSearchMode == SEARCH_NONE)
-        return string("");
-
     stringstream out;
 
     out << setw(6) << maxDepth << setw(6) << score << setw(11) 
