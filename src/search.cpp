@@ -77,24 +77,41 @@ StepCombo Search :: searchRoot(Board& board, int depth)
         return StepCombo(); //give an empty step combo
     }
 
+    //check if there is a hash position of at least this depth, but only
+    //to get the best move from the hash.
+    int bestIndexFromHash = -1;
+    ScoreEntry thisEntry;   
+    if (getScoreEntry(board,thisEntry, depth))
+    {
+        //get best move from hash
+        bestIndexFromHash = thisEntry.getMoveIndex();
+    }
+
+    //give the combos some score for move ordering
+    eval.scoreCombos(combos[0], numCombos[0], board.sideToMove, 
+                     bestIndexFromHash);
+
     Board refer = board;    
     for (int i = 0; i < numCombos[0]; ++i)
     {
-        board.playCombo(combos[0][i]);  
+        //get the next best combo to look at
+        unsigned int nextIndex = getNextBestCombo(0);
+
+        board.playCombo(combos[0][nextIndex]);  
 
         vector<string> nodePV;
 
         short nodeScore = searchNode(board, 
-                                     depth - combos[0][i].stepCost, 
+                                     depth - combos[0][nextIndex].stepCost, 
                                      score, 30000, nodePV, refer);
 
-        board.undoCombo(combos[0][i]);
+        board.undoCombo(combos[0][nextIndex]);
 
         if (nodeScore > score)
         {
             score = nodeScore;
             pv.resize(0);
-            pv.insert(pv.begin(), combos[0][i].toString());
+            pv.insert(pv.begin(), combos[0][nextIndex].toString());
             pv.insert(pv.begin()+1, nodePV.begin(), nodePV.end());
         }
     }
