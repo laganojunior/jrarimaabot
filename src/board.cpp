@@ -888,7 +888,7 @@ unsigned int Board :: genMoves(StepCombo combos[])
         }
     }
 
-    //generate passing all steps
+    //generate the move to pass the turn
     combos[numCombos].reset();
     for (int i = 0; i < stepsLeft; i++)
     {
@@ -896,7 +896,7 @@ unsigned int Board :: genMoves(StepCombo combos[])
         step.genPass();
         
         combos[numCombos].addStep(step);
-    }    hashTurnParts[GOLD] = 
+    } 
     ++numCombos;
 
     return numCombos;

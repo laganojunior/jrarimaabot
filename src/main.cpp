@@ -93,7 +93,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         unsigned int totalMillis = 0;
         unsigned int totalHashHits = 0;
         unsigned int totalHashOverwrites = 0;
-        unsigned int totalNodesPerSec = 0;
+        unsigned int totalNodes = 0;
         //do search iteratively through depth to pump up hash tables and
         //hopefully save nodes for larger depth searches.
         logFile << setw(6) << "Depth" << setw(6) << "Score" << setw(11)
@@ -108,13 +108,13 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
             totalMillis += search.millis;
             totalHashHits += search.hashHits;
             totalHashOverwrites += search.collisions;
-            totalNodesPerSec += search.totalNodesPerSec;
+            totalNodes += search.numTotalNodes;
         }
         logFile << "Finished Search\n";
         logFile << "Total Time: " << totalMillis << "ms\n";
         logFile << "Hash Table Hits: " << totalHashHits << endl;
         logFile << "Hash Colliding Overwrites: "<< totalHashOverwrites<< endl;       
-        logFile << "Avg Nodes/Sec: " << totalNodesPerSec / maxDepth << endl;
+        logFile << "Avg Nodes/Sec: " << totalNodes * 1000/ totalMillis << endl;
         logFile << "Playing Move " << bestMove.toString() << endl;
         cout << bestMove.toString() << endl;
     }

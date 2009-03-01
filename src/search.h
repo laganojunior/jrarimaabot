@@ -13,6 +13,10 @@
 #define SEARCH_NONE      0
 #define SEARCH_ALPHABETA 1
 
+//some limiting constants
+#define SEARCH_MAX_DEPTH 20
+#define SEARCH_MAX_COMBOS_PER_PLY 120
+
 using namespace std;
 
 class Search //Note: This class is not copyable, due to HashTable.
@@ -57,6 +61,10 @@ class Search //Note: This class is not copyable, due to HashTable.
     HashTable<ScoreEntry> scorehashes;
     Int64 scoreHashMask;
     Int64 scoreExtraHashMask;
+
+    //keep pre-made arrays for storing moves at each ply, so that the
+    //constructors/deconstructors aren't called so much
+    StepCombo combos[SEARCH_MAX_DEPTH][SEARCH_MAX_COMBOS_PER_PLY];
 };
 
 #endif

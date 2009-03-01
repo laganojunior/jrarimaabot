@@ -67,8 +67,7 @@ StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
     //start timing now
     time_t reftime = clock();
 
-    StepCombo combos[120];
-    int num = board.genMoves(combos);
+    int num = board.genMoves(combos[depth]);
         
     if (num == 0 ) //no moves available? 
     {
@@ -78,21 +77,21 @@ StepCombo Search :: searchRootAlphaBeta(Board& board, int depth)
     Board refer = board;    
     for (int i = 0; i < num; ++i)
     {
-        board.playCombo(combos[i]);  
+        board.playCombo(combos[depth][i]);  
 
         vector<string> nodePV;
 
         short nodeScore = searchNodeAlphaBeta(board, 
-                                              depth - combos[i].stepCost, 
+                                           depth - combos[depth][i].stepCost, 
                                               score, 30000, nodePV, refer);
 
-        board.undoCombo(combos[i]);
+        board.undoCombo(combos[depth][i]);
 
         if (nodeScore > score)
         {
             score = nodeScore;
             pv.resize(0);
-            pv.insert(pv.begin(), combos[i].toString());
+            pv.insert(pv.begin(), combos[depth][i].toString());
             pv.insert(pv.begin()+1, nodePV.begin(), nodePV.end());
         }  
     }
@@ -191,8 +190,7 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
         bestIndexFromHash = thisEntry.getMoveIndex();
     }
 
-    StepCombo combos[120];
-    int num = board.genMoves(combos);
+    int num = board.genMoves(combos[depth]);
 
     //check for immobility, which is a loss
     if (num == 0) 
@@ -207,12 +205,12 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
     //play each step, and explore each subtree
     for (int i = 0; i < num; ++i) 
     {
-        board.playCombo(combos[i]);  
+        board.playCombo(combos[depth][i]);  
 
         //check if the board is not back to the reference state
         if (board.samePieces(refer))
         {
-            board.undoCombo(combos[i]);
+            board.undoCombo(combos[depth][i]);
             continue;
         }
         
@@ -223,7 +221,8 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
         if (board.stepsLeft != 0)
         {
             //steps remaining, keep searching within this player's turn
-            nodeScore = searchNodeAlphaBeta(board, depth - combos[i].stepCost, 
+            nodeScore = searchNodeAlphaBeta(board, 
+                                          depth - combos[depth][i].stepCost, 
                                               alpha, beta, thisPV, refer);
         }
         else
@@ -238,21 +237,22 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
             Board newRefer = board;
 
             //search through opponent's turn
-            nodeScore = -searchNodeAlphaBeta(board, depth - combos[i].stepCost
+            nodeScore = -searchNodeAlphaBeta(board, 
+                                            depth - combos[depth][i].stepCost
                                             ,-beta, -alpha, thisPV, newRefer);
 
             //revert state back
             board.unchangeTurn(oldnumsteps);
         }
 
-        board.undoCombo(combos[i]);       
+        board.undoCombo(combos[depth][i]);       
 
         if (nodeScore > alpha)
         {
             alpha = nodeScore;
 
             nodePV.resize(0);
-            nodePV.insert(nodePV.begin(), combos[i].toString());
+            nodePV.insert(nodePV.begin(), combos[depth][i].toString());
             nodePV.insert(nodePV.begin() + 1, thisPV.begin(), 
                           thisPV.end());   
 
