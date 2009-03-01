@@ -298,12 +298,12 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
                 //give the killer score for this type of move an increase
                 //depending on the depth to go of this search.
-                if (eval.killermove[combos[ply][i].steps[0].getFrom()]
-                                   [combos[ply][i].steps[0].getTo()]
+                if (eval.killermove[combos[ply][nextIndex].steps[0].getFrom()]
+                                   [combos[ply][nextIndex].steps[0].getTo()]
                                    [board.sideToMove] + depth <= 255)
 
-                    eval.killermove[combos[ply][i].steps[0].getFrom()]
-                                   [combos[ply][i].steps[0].getTo()]
+                    eval.killermove[combos[ply][nextIndex].steps[0].getFrom()]
+                                   [combos[ply][nextIndex].steps[0].getTo()]
                                    [board.sideToMove] += depth;
                     
                 return beta;
