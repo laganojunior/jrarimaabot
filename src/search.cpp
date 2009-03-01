@@ -220,8 +220,7 @@ short Search :: searchNodeAlphaBeta(Board& board, int depth, short alpha,
     for (int i = 0; i < numCombos[ply]; ++i) 
     {
         //get the next best combo to look at
-        //unsigned int nextIndex = getNextBestCombo(ply);
-        unsigned int nextIndex = i;
+        unsigned int nextIndex = getNextBestCombo(ply);
 
         board.playCombo(combos[ply][nextIndex]);  
 
