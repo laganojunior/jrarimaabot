@@ -22,12 +22,16 @@ using namespace std;
 Search :: Search(int scoreHashBits)
 {
 
+
+
     scorehashes.init(Int64FromIndex(scoreHashBits));
-    scoreHashMask = 0;
-    scoreExtraHashMask = 0;
+    gameHist.init(Int64FromIndex(SEARCH_GAME_HIST_HASH_BITS));
 
     //create masks. Note that masks for hash keys are done from the least
     //signficant bit, but masks for extra bits are done the other way
+    scoreHashMask = 0;
+    scoreExtraHashMask = 0;
+
     for (int i = 0; i < scoreHashBits; i++)
         scoreHashMask |= Int64FromIndex(i);
 
@@ -35,6 +39,11 @@ Search :: Search(int scoreHashBits)
     {
         scoreExtraHashMask |= Int64FromIndex(63 - i);
     }
+
+    gameHistHashMask = 0;
+
+    for (int i = 0; i < SEARCH_GAME_HIST_HASH_BITS; i++)
+        gameHistHashMask |= Int64FromIndex(i);
 
     //set killer moves to zero array
     memset(eval.killermove, 0, sizeof(unsigned char) * NUM_SQUARES * 
@@ -373,6 +382,24 @@ bool Search :: getScoreEntry(Board& board, ScoreEntry& entry,
     }
 
     return false;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Increase the count in the game history for the given board position.
+//////////////////////////////////////////////////////////////////////////////
+void Search :: incrementGameHistory(Board& board)
+{
+    GameHistEntry hist = gameHist.getEntry(board.hash & gameHistHashMask);
+    hist.numOccur++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Decrease the count in the game history for the given board position
+//////////////////////////////////////////////////////////////////////////////
+void Search :: decrementGameHistory(Board& board)
+{
+    GameHistEntry hist = gameHist.getEntry(board.hash & gameHistHashMask);
+    hist.numOccur--;
 }
 
 //////////////////////////////////////////////////////////////////////////////

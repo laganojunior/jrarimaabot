@@ -14,6 +14,9 @@
 #define SEARCH_MAX_DEPTH 20
 #define SEARCH_MAX_COMBOS_PER_PLY 120
 
+//hash bit constants
+#define SEARCH_GAME_HIST_HASH_BITS 10
+
 using namespace std;
 
 class Search //Note: This class is not copyable, due to HashTable.
@@ -31,6 +34,9 @@ class Search //Note: This class is not copyable, due to HashTable.
                        unsigned char bestMoveIndex, unsigned int depth);
     bool getScoreEntry(Board& board, ScoreEntry& entry, 
                        unsigned int depth);
+
+    void incrementGameHistory(Board& board);
+    void decrementGameHistory(Board& board);
 
     unsigned int getNextBestCombo(unsigned int ply);
 
@@ -56,6 +62,12 @@ class Search //Note: This class is not copyable, due to HashTable.
     HashTable<ScoreEntry> scorehashes;
     Int64 scoreHashMask;
     Int64 scoreExtraHashMask;
+
+    //a hash table to keep data on which positions have occurred at the
+    //end of turns, used to make sure positions aren't repeated 3 times
+    //which is a loss.
+    HashTable<GameHistEntry> gameHist;
+    Int64 gameHistHashMask;
 
     //keep pre-made arrays for storing moves at each ply, so that the
     //constructors/deconstructors aren't called so much

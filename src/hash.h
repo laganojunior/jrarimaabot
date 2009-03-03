@@ -16,6 +16,7 @@
 
 using namespace std;
 
+//Hash entry used to keep scores and best successor on board positions
 class ScoreEntry
 {
     //data is packed into a 64 bit integer as follows:
@@ -114,6 +115,25 @@ class ScoreEntry
     Int64 data;
 };
 
+//Hash entry to see how many times a position occurred at the end of a turn
+//Used for enforcing 3-repeat rule
+class GameHistEntry
+{
+    public:
+    //////////////////////////////////////////////////////////////////////////
+    //Resets the entry to nothing.
+    //////////////////////////////////////////////////////////////////////////
+    void reset()
+    {
+        numOccur = 0;
+    }
+
+
+    unsigned char numOccur; // number of times this position has occurred
+    
+};
+    
+
 //Generic Hash table template class
 template <class T> 
 class HashTable
@@ -164,4 +184,3 @@ class HashTable
 };    
 
 #endif
-    
