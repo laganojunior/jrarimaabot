@@ -12,6 +12,9 @@
 #include "int64.h"
 #include <assert.h>
 #include <string.h>
+#include <vector>
+
+using namespace std;
 
 class ScoreEntry
 {
@@ -99,6 +102,14 @@ class ScoreEntry
              | extra;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //Resets the entry to nothing.
+    //////////////////////////////////////////////////////////////////////////
+    void reset()
+    {
+        data = 0;
+    }
+
     private:
     Int64 data;
 };
@@ -109,60 +120,14 @@ class HashTable
 {
     public:
 	//////////////////////////////////////////////////////////////////////////
-	//Constructor. Initializes a zero array.
-	//////////////////////////////////////////////////////////////////////////
-    HashTable()
-	{
-		numEntries = 0; 
-		entries = NULL;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	//Deconstructor. Cleans up the array
-	//////////////////////////////////////////////////////////////////////////
-    ~HashTable()
-	{
-		if (entries)
-		    delete[] entries;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	//Copy constructor. Make sure to make an actual copy of the array
-	//////////////////////////////////////////////////////////////////////////
-    HashTable(const HashTable<T>& copy)
-	{
-		//check for self-assignment
-		if (&copy == this)
-		    return;
-
-		if (entries)    
-		    delete []entries;
-
-		if (copy.entries != NULL)
-		{
-		    entries = new T[copy.numEntries];
-		    numEntries = copy.numEntries;
-		}
-		else
-		{
-		    entries = NULL;
-		    numEntries = 0;
-		}
-	} 
-
-	//////////////////////////////////////////////////////////////////////////
 	//initializes the hashtable with the specified number of entries, and 
 	//zeroes out the entries
 	//////////////////////////////////////////////////////////////////////////
     void init(Int64 numEntries)
 	{
-		if (entries)
-		    delete [] entries;
-
-		entries = new T[numEntries];
-		this->numEntries = numEntries;
-
-		memset(entries, 0, sizeof(T) * numEntries);
+		entries.resize(numEntries);
+        for (int i = 0; i < numEntries; i++)
+            entries[i].reset();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -170,24 +135,31 @@ class HashTable
 	//////////////////////////////////////////////////////////////////////////
 	T& getEntry(Int64 key)
 	{
-		assert (key>=0 && key < numEntries);
+		assert (key>=0 && key < entries.size());
 
 		return entries[key];
 	}
-
 
     //////////////////////////////////////////////////////////////////////////
 	//Sets the entry for the given hash key
 	//////////////////////////////////////////////////////////////////////////
 	void setEntry(Int64 key, T& entry)
 	{
-		assert (key>=0 && key < numEntries);
+		assert (key>=0 && key < entries.size());
 		entries[key] = entry;
 	}
 
+    //////////////////////////////////////////////////////////////////////////
+    //Returns the number of entries
+    //////////////////////////////////////////////////////////////////////////
+    unsigned int getNumEntries()
+    {
+        return entries.size();
+    }
+
     private:
 
-    T * entries;       //array of entries in the hashtable
+    vector<T> entries;       //array of entries in the hashtable
     Int64 numEntries;  //number of entries
 };    
 
