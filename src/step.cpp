@@ -207,8 +207,13 @@ void StepCombo :: fromString(string s)
         if (stepStream.fail())
             break;
 
-        if (word == string("PASS")) //passing move, which is really nothing
+        //passing move, which is really nothing, but the step cost must still
+        //be updated
+        if (word == string("PASS")) 
+        {
+            stepCost++;
             continue;
+        }
 
         Step step;
         step.fromString(word);
