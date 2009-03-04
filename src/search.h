@@ -19,7 +19,7 @@
 
 using namespace std;
 
-class Search //Note: This class is not copyable, due to HashTable.
+class Search
 {
     public:
     Search(int numScoreHashBits);
@@ -37,6 +37,8 @@ class Search //Note: This class is not copyable, due to HashTable.
 
     void incrementGameHistory(Board& board);
     void decrementGameHistory(Board& board);
+    int  getGameHistoryOccurences(Board& board);
+    void loadMoveFile(string filename, Board board);
 
     unsigned int getNextBestCombo(unsigned int ply);
 
@@ -64,7 +66,7 @@ class Search //Note: This class is not copyable, due to HashTable.
     Int64 scoreExtraHashMask;
 
     //a hash table to keep data on which positions have occurred at the
-    //end of turns, used to make sure positions aren't repeated 3 times
+    //beginning of turns, used to make sure positions aren't repeated 3 times
     //which is a loss.
     HashTable<GameHistEntry> gameHist;
     Int64 gameHistHashMask;

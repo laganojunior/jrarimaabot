@@ -22,8 +22,6 @@ using namespace std;
 Search :: Search(int scoreHashBits)
 {
 
-
-
     scorehashes.init(Int64FromIndex(scoreHashBits));
     gameHist.init(Int64FromIndex(SEARCH_GAME_HIST_HASH_BITS));
 
@@ -273,6 +271,19 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             unsigned char oldnumsteps = board.stepsLeft;
             board.changeTurn();
 
+            //Check if state is now one that has occurred in the history
+            //2 times before (making this the third). If it is, disallow the
+            //move
+            if (getGameHistoryOccurences(board) >= 2)
+            {   
+                board.unchangeTurn(oldnumsteps);
+                board.undoCombo(combos[ply][nextIndex]);
+                continue;
+            }
+
+            //Increment board state occurences
+            incrementGameHistory(board);
+
             //set new refer state to this one
             Board newRefer = board;
 
@@ -280,6 +291,9 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             nodeScore = -searchNode(board, 
                                     depth - combos[ply][nextIndex].stepCost,
                                     -beta, -alpha, thisPV, newRefer);
+
+            //Decrement board state occurences
+            decrementGameHistory(board);
 
             //revert state back
             board.unchangeTurn(oldnumsteps);
@@ -389,8 +403,10 @@ bool Search :: getScoreEntry(Board& board, ScoreEntry& entry,
 //////////////////////////////////////////////////////////////////////////////
 void Search :: incrementGameHistory(Board& board)
 {
-    GameHistEntry hist = gameHist.getEntry(board.hash & gameHistHashMask);
-    hist.numOccur++;
+    GameHistEntry& hist = gameHist.getEntry(board.hashPiecesOnly
+                                            & gameHistHashMask);
+    if (hist.numOccur < 127)
+        hist.numOccur++;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -398,9 +414,186 @@ void Search :: incrementGameHistory(Board& board)
 //////////////////////////////////////////////////////////////////////////////
 void Search :: decrementGameHistory(Board& board)
 {
-    GameHistEntry hist = gameHist.getEntry(board.hash & gameHistHashMask);
-    hist.numOccur--;
+    GameHistEntry& hist = gameHist.getEntry(board.hashPiecesOnly 
+                                            & gameHistHashMask);
+    if (hist.numOccur > 0)
+        hist.numOccur--;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//returns the count in the game history for the given board position
+//////////////////////////////////////////////////////////////////////////////
+int  Search :: getGameHistoryOccurences(Board& board)
+{
+    GameHistEntry& hist = gameHist.getEntry(board.hashPiecesOnly
+                                            & gameHistHashMask);
+    return hist.numOccur;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Loads a move file and places all the moves at the beginning of the turn 
+//in the history, using the board given as a reference for hashes. It is 
+//important that the board given is the board used to do searches (or at least
+//a copy of that board with the same hash parts) as the
+//data is only good if the hashes match up.
+//////////////////////////////////////////////////////////////////////////////
+void Search :: loadMoveFile(string filename, Board board)
+{
+
+    board.reset();
+    
+    //keep a stack of boards so that takebacks can easily be done
+    vector<Board> boardHist;
+    boardHist.push_back(board);
+
+
+    ifstream in(filename.c_str());
+    
+    if (!in.is_open())
+    {
+        Error error;
+        error << "From Search :: loadMoveFile(string, board)\n"
+              << "Could not open file: "
+              << filename << "\n";
+        throw error;
+    }
+
+    //go through all lines, until the file ends, or quit is signaled
+    bool quit = false;
+    while (!in.eof() || quit)
+    {
+        string line;
+
+        //read the line
+        getline(in, line);
+        stringstream lineStream(line);
+
+        string word;
+
+        //grab the first word, which tells what the the turn number is.
+        lineStream >> word; 
+
+        if (word == string(""))
+            break;
+
+        stringstream wordStream(word);
+        if (!isdigit(word[0]))
+        {
+            Error error;
+            error << "From Search:: loadMoveFile(string, board)\n"
+                  << "Expected turn number as first part in first line\n"
+                  << "Got: " << word << '\n';
+            throw error;
+        }
+
+        int turnNumber;
+        wordStream >> turnNumber;
+
+        if (turnNumber == 1)
+        {
+            //first turn has pieces being played onto the board, read the
+            //next 16 words which should say where the pieces go
+            
+            bool okay = true;
+            for (int i = 0; i < 16; i++)
+            {
+                lineStream >> word;
+                
+                if (lineStream.bad() || lineStream.eof())
+                {
+                    quit = 1;
+                    okay = false;
+                    break;
+                }
+
+                //Check if a move is being taken back instead
+                if (word == string("takeback"))
+                {
+                    //remove an occurence of the current board to the history
+                    decrementGameHistory(board);
+
+                    //pop the last board on the stack back onto the current
+                    //state
+                    board = boardHist.back();
+                    boardHist.pop_back();
+
+                    //flag that it is not okay to write this board state
+                    //to history
+                    okay = false;
+                    break;
+                }
+
+                if (word.length() != 3)
+                {
+                    Error error;
+                    error << "From Search:: loadMoveFile(string, board)\n";
+                    error << "Invalid Format for first piece placement\n";
+                    error << "Got: " << word << '\n';
+                    
+                    throw error;
+                }
+
+                //read the piece
+                unsigned char piece = pieceFromChar(word[0]);
+                     
+                //read the location
+                stringstream squareStringStream;    
+                squareStringStream << word[1] << word[2];
+                unsigned char square = 
+                                 squareFromString(squareStringStream.str());
+
+                //write the piece onto the location
+                board.writePieceOnBoard(square, colorOfPiece(piece),
+                                                typeOfPiece(piece));
+                    
+            }
+
+            if (okay)
+            {
+                //Add the current states to the history and the board stack
+                incrementGameHistory(board);
+                boardHist.push_back(board);
+            }
+        }
+        else
+        {
+            //turn should have a list of steps to play
+            StepCombo steps;
+    
+            //get the rest of the line
+            string rest;
+            getline(lineStream, rest);
+
+            if (rest == string("takeback"))
+            {
+                //remove an occurence of the current board to the history
+                decrementGameHistory(board);
+
+                //pop the last board on the stack back onto the current
+                //state
+                board = boardHist.back();
+                boardHist.pop_back();
+
+                continue;
+            }
+
+            if (rest == string(""))
+                break;
+
+            //create the steps from the line
+            steps.fromString(rest);
+
+            //play the steps on the board, then give the turn away
+            board.playCombo(steps);
+            board.changeTurn();
+        
+            //Add the current states to the history and the board stack
+            incrementGameHistory(board);
+            boardHist.push_back(board);
+        }
+    }
+}
+        
 
 //////////////////////////////////////////////////////////////////////////////
 //Gets the index of next best combo from the combos array at the given ply 

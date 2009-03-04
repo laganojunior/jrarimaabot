@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <string>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -220,7 +221,12 @@ void StepCombo :: fromString(string s)
 //adds a step to this combo.
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: addStep(Step step)
-{
+{   
+    if (numSteps >= MAX_STEPS_IN_COMBO)
+    {
+        cerr << toString() << endl;
+    }
+
     assert(numSteps < MAX_STEPS_IN_COMBO);
 
     steps[numSteps] = step;

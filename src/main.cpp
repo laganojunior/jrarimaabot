@@ -87,6 +87,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         short score;
         StepCombo pv;
         Search search(hashBits);
+        search.loadMoveFile(moveFile, board);
         
         StepCombo bestMove;
 

@@ -15,10 +15,25 @@
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
-//Basic constructor, basically initializes an empty board, and initializes
-//the hash parts for the hashes and locks
+//Basic constructor, basically initializes an empty board
 //////////////////////////////////////////////////////////////////////////////
 Board :: Board()
+{
+    reset();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Deconstructor, for now it doesn't need to do anything
+//////////////////////////////////////////////////////////////////////////////
+Board :: ~Board()
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Resets the board to a new game position
+//////////////////////////////////////////////////////////////////////////////
+void Board :: reset()
 {
     //zero out the bitboards, could use memset for this, but for now I'll
     //be more explicit
@@ -33,14 +48,9 @@ Board :: Board()
     sideToMove = GOLD;
     stepsLeft = 4;
     turnNumber = 1;
-}
 
-//////////////////////////////////////////////////////////////////////////////
-//Deconstructor, for now it doesn't need to do anything
-//////////////////////////////////////////////////////////////////////////////
-Board :: ~Board()
-{
-
+    hash = 0;
+    hashPiecesOnly = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -78,7 +88,7 @@ void Board :: loadPositionFile(string filename)
         Error error;
         error << "From Board :: loadPositionFile(string)\n"
               << "Expected turn number as first part in first line\n"
-              << "Got: " << word[0] << '\n';
+              << "Got: " << word << '\n';
         throw error;
     }
     wordStream >> turnNumber;
@@ -120,6 +130,7 @@ void Board :: loadPositionFile(string filename)
     }
 
     hash = 0;
+    hashPiecesOnly = 0;
 
     //read the next 8 lines to read the board
     for (int i = 0; i < 8; i++)
@@ -304,6 +315,7 @@ void Board :: writePieceOnBoard(unsigned char index, unsigned char color,
     
     //update the hashes
     hash ^= hashPieceParts[color][type][index];
+    hashPiecesOnly ^= hashPieceParts[color][type][index];
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -316,6 +328,7 @@ void Board :: removePieceFromBoard(unsigned char index, unsigned char color,
     pieces[color][type] ^= Int64FromIndex(index);
 
     hash ^= hashPieceParts[color][type][index];
+    hashPiecesOnly ^= hashPieceParts[color][type][index];
 }
 
 //////////////////////////////////////////////////////////////////////////////

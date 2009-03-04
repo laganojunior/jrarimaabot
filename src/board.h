@@ -20,6 +20,8 @@ class Board
     
     //functions///////////////////////////////////////////////////////////////
 
+    void reset();
+
     void loadPositionFile(string filename);
     void setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
                    Int64 turnParts[], Int64 stepsLeftParts[]);
@@ -64,7 +66,11 @@ class Board
     Int64 hashStepsLeftParts[5];
 
     //hashes
-    Int64 hash; //key that is used to access the entry
+    Int64 hash; //key that is used to access the entry in the transposition
+                //table
+
+    Int64 hashPiecesOnly; //key that is only dependent on the piece state,
+                          //not on the steps left and player to move
                        
 
     unsigned char sideToMove; //current player to move

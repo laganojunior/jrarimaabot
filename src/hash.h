@@ -129,7 +129,7 @@ class GameHistEntry
     }
 
 
-    unsigned char numOccur; // number of times this position has occurred
+    char numOccur; // number of times this position has occurred
     
 };
     
