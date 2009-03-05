@@ -201,30 +201,29 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     ScoreEntry thisEntry;   
     if (getScoreEntry(board,thisEntry, depth))
     {
+        //adjust the bounds with the bounds in the hash entry
+
         //exact bounds
         if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
-        {
-            nodePV.resize(1);
-            nodePV[0] = "<HT>";
-            hashHits++;
-            ++numTerminalNodes;
-            return thisEntry.getScore();
+        {       
+            alpha = thisEntry.getScore();
+            beta = thisEntry.getScore();
         }
 
-        //upper bound cutoff
-        if (thisEntry.getScoreType() == SCORE_ENTRY_UPPER
-            && thisEntry.getScore() <= alpha)
+        //upper bound adjust
+        if (thisEntry.getScoreType() == SCORE_ENTRY_UPPER)
         {
-            nodePV.resize(1);
-            nodePV[0] = "<HT>";
-            hashHits++;
-            ++numTerminalNodes;
-            return alpha;
+            beta = thisEntry.getScore();
         }
 
-        //lower bound cutoff
-        if (thisEntry.getScoreType() == SCORE_ENTRY_LOWER
-            && thisEntry.getScore() >= beta)
+        //lower bound adjust
+        if (thisEntry.getScoreType() == SCORE_ENTRY_LOWER)
+        {
+            alpha = thisEntry.getScore();
+        }
+
+        //check if the adjustments made a cutoff
+        if (alpha >= beta)
         {
             nodePV.resize(1);
             nodePV[0] = "<HT>";
