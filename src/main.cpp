@@ -138,11 +138,13 @@ int main(int argc, char * args[])
         int mode = MODE_HELP;
         int maxDepth = 4;
         int hashBits;
+
         //set hash bits low enough so that the hash table is at most 50 MB
-        for (hashBits = 63;
+        for (hashBits = 0;
              Int64FromIndex(hashBits) * 
-             (sizeof(ScoreEntry)) > 50 * 1024 * 1024;
-             hashBits--);
+             (sizeof(ScoreEntry)) < (Int64)50 * 1024 * 1024;
+             hashBits++);
+        hashBits --;
 
         string positionFile;
         string moveFile;
@@ -177,10 +179,13 @@ int main(int argc, char * args[])
             {
                 int hashSize = atoi(args[i+1]);
 
-                for (hashBits = 63;
-                  Int64FromIndex(hashBits) * 
-                  (sizeof(ScoreEntry)) > hashSize * 1024 * 1024;
-                     hashBits--);
+                for (hashBits = 0;
+                     Int64FromIndex(hashBits) * 
+                     (sizeof(ScoreEntry)) < (Int64)50 * 1024 * 1024;
+                     hashBits++);
+
+                hashBits --;
+
 
                 ++i;
             }
