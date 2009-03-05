@@ -137,7 +137,13 @@ int main(int argc, char * args[])
 
         int mode = MODE_HELP;
         int maxDepth = 4;
-        int hashBits = 24;
+        int hashBits;
+        //set hash bits low enough so that the hash table is at most 50 MB
+        for (hashBits = 63;
+             Int64FromIndex(hashBits) * 
+             (sizeof(ScoreEntry)) > 50 * 1024 * 1024;
+             hashBits--);
+
         string positionFile;
         string moveFile;
         string gamestateFile;
@@ -167,9 +173,15 @@ int main(int argc, char * args[])
                 maxDepth = atoi(args[i+1]);
                 ++i;
             }
-            else if (string(args[i]) == string("--hashbits"))
+            else if (string(args[i]) == string("--hashtablesize"))
             {
-                hashBits = atoi(args[i+1]);
+                int hashSize = atoi(args[i+1]);
+
+                for (hashBits = 63;
+                  Int64FromIndex(hashBits) * 
+                  (sizeof(ScoreEntry)) > hashSize * 1024 * 1024;
+                     hashBits--);
+
                 ++i;
             }
             else if (string(args[i]) == string("--genmoves"))
@@ -187,13 +199,20 @@ int main(int argc, char * args[])
                     cout << combos[i].toString() << endl;
                 }
                 cout << board.stepsLeft << endl;
+            }
+            else if (string(args[i]) == string("--eval"))
+            {
+                mode = MODE_NONE;
+                Board board;
+                positionFile = args[i+1];
+                board.loadPositionFile(positionFile);
 
+                Eval eval;
+                cout << eval.evalBoard(board, board.sideToMove) << endl;
             }
             else if (string(args[i]) == string("--test"))
             {
 				mode = MODE_NONE;
-                
-				
             }
 
             //ignore any other flags
@@ -209,9 +228,12 @@ int main(int argc, char * args[])
             cout << "--gameroom positionFile moveFile gamestateFile\n"
                  << "Behaves according to the arimaa gameroom specification\n\n";
             cout << "--depth max\nSets the max search depth. Defaults to 4\n\n";
-            cout << "--hashbits num\nSets the number of bits for the hash key."
-                 << "Note that the memory need to then store the hashtable"
-                 << "is 2 ^ (num) * 8 bytes. Defaults to 20\n\n";
+            cout << "--hashtablesize num\nSets the size of the hash table in"
+                 << "MB. Defaults to 50\n\n";
+            cout << "--genmoves positionFile\nDisplays the set of moves that"
+                 << "the move generator generates from a position\n\n";
+            cout << "--eval positionFile\nDisplays the static evaluation"
+                 << "score the evaluator returns from a position\n\n";
         }
 
             
