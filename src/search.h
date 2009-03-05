@@ -16,6 +16,7 @@
 
 //hash bit constants
 #define SEARCH_GAME_HIST_HASH_BITS 10
+#define SEARCH_SEARCH_HIST_HASH_BITS 10
 
 using namespace std;
 
@@ -27,8 +28,7 @@ class Search
 
     StepCombo searchRoot(Board& board, int depth);
     short searchNode(Board& board, int depth, short alpha,  
-                              short beta, vector<string>& nodePV, 
-                              Board& refer);
+                              short beta, vector<string>& nodePV);
 
     void addScoreEntry(Board& board, unsigned char scoreType, short score,
                        unsigned char bestMoveIndex, unsigned int depth);
@@ -38,7 +38,11 @@ class Search
     void incrementGameHistory(Board& board);
     void decrementGameHistory(Board& board);
     int  getGameHistoryOccurences(Board& board);
-    void loadMoveFile(string filename, Board board);
+    void loadMoveFile(string filename, Board board);  
+
+    void addSearchHistory(Board& board);
+    void removeSearchHistory(Board& board);
+    bool  hasOccured(Board& board);
 
     unsigned int getNextBestCombo(unsigned int ply);
 
@@ -70,6 +74,12 @@ class Search
     //which is a loss.
     HashTable<GameHistEntry> gameHist;
     Int64 gameHistHashMask;
+
+    //a hash table to keep data on which positions are in this search path
+    //down the tree. This is used to eliminate moves that just lead to
+    //repeating positions
+    HashTable<SearchHistEntry> searchHist;
+    Int64 searchHistHashMask;
 
     //keep pre-made arrays for storing moves at each ply, so that the
     //constructors/deconstructors aren't called so much

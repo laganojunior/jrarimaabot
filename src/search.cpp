@@ -24,6 +24,7 @@ Search :: Search(int scoreHashBits)
 
     scorehashes.init(Int64FromIndex(scoreHashBits));
     gameHist.init(Int64FromIndex(SEARCH_GAME_HIST_HASH_BITS));
+    searchHist.init(Int64FromIndex(SEARCH_SEARCH_HIST_HASH_BITS));
 
     //create masks. Note that masks for hash keys are done from the least
     //signficant bit, but masks for extra bits are done the other way
@@ -42,6 +43,9 @@ Search :: Search(int scoreHashBits)
 
     for (int i = 0; i < SEARCH_GAME_HIST_HASH_BITS; i++)
         gameHistHashMask |= Int64FromIndex(i);
+
+    for (int i = 0; i < SEARCH_SEARCH_HIST_HASH_BITS; i++)
+        searchHistHashMask |= Int64FromIndex(i);
 
     //set killer moves to zero array
     memset(eval.killermove, 0, sizeof(unsigned char) * NUM_SQUARES * 
@@ -94,11 +98,13 @@ StepCombo Search :: searchRoot(Board& board, int depth)
         bestIndexFromHash = thisEntry.getMoveIndex();
     }
 
+    //Add this board to the search history
+    addSearchHistory(board);
+
     //give the combos some score for move ordering
     eval.scoreCombos(combos[0], numCombos[0], board.sideToMove, 
                      bestIndexFromHash);
 
-    Board refer = board;    
     for (int i = 0; i < numCombos[0]; ++i)
     {
         //get the next best combo to look at
@@ -106,11 +112,25 @@ StepCombo Search :: searchRoot(Board& board, int depth)
 
         board.playCombo(combos[0][nextIndex]);  
 
+        //Check if the position has already occured in the search history.
+        //This can happen in the root if the first move is a complete pass
+        if (hasOccured(board))
+        {
+            board.undoCombo(combos[0][nextIndex]);
+            continue;
+        }
+
+        //add this new board to the search history
+        addSearchHistory(board);
+
         vector<string> nodePV;
 
         short nodeScore = searchNode(board, 
                                      depth - combos[0][nextIndex].stepCost, 
-                                     score, 30000, nodePV, refer);
+                                     score, 30000, nodePV);
+
+        //remove the board from the history
+        removeSearchHistory(board);
 
         board.undoCombo(combos[0][nextIndex]);
 
@@ -156,7 +176,7 @@ StepCombo Search :: searchRoot(Board& board, int depth)
 //of the turn, so don't go down paths that repeat that state
 //////////////////////////////////////////////////////////////////////////////
 short Search :: searchNode(Board& board, int depth, short alpha, 
-                           short beta, vector<string>& nodePV, Board& refer)
+                           short beta, vector<string>& nodePV)
 {   
 
     ++numTotalNodes; //count the node as explored
@@ -245,12 +265,15 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
         board.playCombo(combos[ply][nextIndex]);  
 
-        //check if the board is not back to the reference state
-        if (board.samePieces(refer))
+        //Check if the position has already occured in the search history.
+        if (hasOccured(board))
         {
             board.undoCombo(combos[ply][nextIndex]);
             continue;
         }
+
+        //add this new board to the search history
+        addSearchHistory(board);
         
         vector<string> thisPV;
         short nodeScore;
@@ -261,7 +284,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             //steps remaining, keep searching within this player's turn
             nodeScore = searchNode(board, 
                                    depth - combos[ply][nextIndex].stepCost, 
-                                   alpha, beta, thisPV, refer);
+                                   alpha, beta, thisPV);
         }
         else
         {
@@ -284,13 +307,10 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             //Increment board state occurences
             incrementGameHistory(board);
 
-            //set new refer state to this one
-            Board newRefer = board;
-
             //search through opponent's turn
             nodeScore = -searchNode(board, 
                                     depth - combos[ply][nextIndex].stepCost,
-                                    -beta, -alpha, thisPV, newRefer);
+                                    -beta, -alpha, thisPV);
 
             //Decrement board state occurences
             decrementGameHistory(board);
@@ -298,6 +318,9 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             //revert state back
             board.unchangeTurn(oldnumsteps);
         }
+
+        //remove the board from the history
+        removeSearchHistory(board);
 
         board.undoCombo(combos[ply][nextIndex]);       
 
@@ -592,6 +615,36 @@ void Search :: loadMoveFile(string filename, Board board)
             boardHist.push_back(board);
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Add a board to the search history
+//////////////////////////////////////////////////////////////////////////////
+void Search :: addSearchHistory(Board& board)
+{
+    SearchHistEntry& hist = searchHist.getEntry(board.hashPiecesOnly
+                                               & searchHistHashMask);
+    hist.occured = true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Remove a board from the search history
+//////////////////////////////////////////////////////////////////////////////
+void Search :: removeSearchHistory(Board& board)
+{
+    SearchHistEntry& hist = searchHist.getEntry(board.hashPiecesOnly
+                                               & searchHistHashMask);
+    hist.occured = false;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//returns wheter or not a board is present in the search history
+//////////////////////////////////////////////////////////////////////////////
+bool Search :: hasOccured(Board& board)
+{
+    SearchHistEntry& hist = searchHist.getEntry(board.hashPiecesOnly
+                                               & searchHistHashMask);
+    return hist.occured;
 }
         
 

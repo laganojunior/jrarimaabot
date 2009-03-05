@@ -132,10 +132,27 @@ class GameHistEntry
     char numOccur; // number of times this position has occurred
     
 };
+
+//Hash entry to see if a position has already occurred down the current 
+//search path. Used to avoid repititions
+class SearchHistEntry
+{
+    public:
+    //////////////////////////////////////////////////////////////////////////
+    //Resets the entry to nothing.
+    //////////////////////////////////////////////////////////////////////////
+    void reset()
+    {
+        occured = false;
+    }
+
+
+    char occured; 
     
+};
 
 //Generic Hash table template class
-template <class T> 
+template <class T> //Note, T should have a reset() functions
 class HashTable
 {
     public:
