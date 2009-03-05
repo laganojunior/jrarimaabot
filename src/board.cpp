@@ -567,7 +567,7 @@ unsigned int Board :: genMoves(StepCombo combos[])
             {
 
                 //get all lower enemies
-                lowNeighbors = getAllPiecesLower(piece) & getNeighbors(from) 
+                lowNeighbors = getAllPiecesLower(type) & getNeighbors(from) 
                              & getAllPiecesOfColor(oppColorOf(sideToMove));
 
                 //get all of those lower enemies near a trap
@@ -685,8 +685,6 @@ unsigned int Board :: genMoves(StepCombo combos[])
                                                       //to prefix pulls.
 
                 ++numCombos;//note that piece is captured for scoring purposes
-                    combos[numCombos].hasFriendlyCapture = true;
-                    combos[numCombos].friendlyCaptureType = type; 
 
                 //write pulls for every lower neighbor. Keep a copy of the
                 //bitboard as it is used again for pushes.
@@ -755,7 +753,7 @@ unsigned int Board :: genMoves(StepCombo combos[])
                     lowNeighbors ^= Int64FromIndex(lowerSquare);
 
                     unsigned char lowerPiece = getPieceAt(lowerSquare);
-    
+
                     //iterate through all squares this lower piece can be
                     //pushed to.
 
