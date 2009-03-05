@@ -29,79 +29,79 @@ short Eval :: evalBoard(Board& board, unsigned char color)
 
     //rabbit advancement
     int advance = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(0)) * 30000
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(1)) * 100
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 50
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 25
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 10
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(1)) * 50
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 20
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 15
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 5
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 5
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(6)) * 5
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 50
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(7)) * 30000
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(6)) * 100
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 50
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 25
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 10
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(6)) * 50
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 20
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 15
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 5
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(2)) * 5
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(1)) * 5
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(0)) * 50;
 
     //keeps center control with the strong board.pieces
-    int strongCenter = __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(0)) * 50
-                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(1)) * 40
-                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(2)) * 30
-                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(3)) * 20
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(0)) * 30
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(1)) * 20
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(2)) * -50
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(3)) * -75
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(0)) * 40
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(1)) * 30
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(2)) * 20
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(3)) * 30
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(0)) * 50
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(1)) * 40
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(2)) * 30
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(3)) * 20
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(0)) * 40
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(1)) * 20
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(2)) * -50
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(3)) * -75
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(0)) * 40
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(1)) * 30
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(2)) * 20
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(3)) * 30;
+    int strongCenter = __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(0)) * 25
+                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(1)) * 15
+                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(2)) * 10
+                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(3)) * 0
+                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(0)) * 10
+                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(1)) * 10
+                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(2)) * 0
+                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(3)) * -20
+                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(0)) * 5
+                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(1)) * 4
+                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(2)) * 3
+                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(3)) * 3
+                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(0)) * 25
+                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(1)) * 15
+                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(2)) * 10
+                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(3)) * 0
+                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(0)) * 10
+                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(1)) * 10
+                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(2)) * 0
+                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(3)) * -20
+                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(0)) * 5
+                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(1)) * 4
+                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(2)) * 3
+                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(3)) * 3;
 
     //keep rabbits away from center 
-    int rabbitCenterAvoid = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(0)) * -100
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(1)) * -75
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(2)) * -25
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 25;
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(0)) * -100
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(1)) * -75
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(2)) * -25
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(3)) * 25;
+    int rabbitCenterAvoid = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(0)) * -10
+                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(1)) * -5
+                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(2)) * -3
+                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 10;
+                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(0)) * -10
+                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(1)) * -5
+                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(2)) * -3
+                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(3)) * 10;
 
     //keep pieces away from traps
-    int trapAvoid = __builtin_popcountll(board.pieces[GOLD][CAMEL] & (getTraps() | getTrapNeighbors()))    * -50
-                  + __builtin_popcountll(board.pieces[GOLD][HORSE] & (getTraps() | getTrapNeighbors()))    * -40
-                  + __builtin_popcountll(board.pieces[GOLD][DOG] & (getTraps() | getTrapNeighbors()))      * -20
-                  + __builtin_popcountll(board.pieces[GOLD][CAT] & (getTraps() | getTrapNeighbors()))      * -20
-                  + __builtin_popcountll(board.pieces[GOLD][RABBIT] & (getTraps() | getTrapNeighbors()))   * -50
-                  - __builtin_popcountll(board.pieces[SILVER][CAMEL] & (getTraps() | getTrapNeighbors()))  * -50 
-                  - __builtin_popcountll(board.pieces[SILVER][HORSE] & (getTraps() | getTrapNeighbors()))  * -40
-                  - __builtin_popcountll(board.pieces[SILVER][DOG] & (getTraps() | getTrapNeighbors()))    * -20
-                  - __builtin_popcountll(board.pieces[SILVER][CAT] & (getTraps() | getTrapNeighbors()))    * -20
-                  - __builtin_popcountll(board.pieces[SILVER][RABBIT] & (getTraps() | getTrapNeighbors())) * -50;
+    int trapAvoid = __builtin_popcountll(board.pieces[GOLD][CAMEL] & (getTraps() | getTrapNeighbors()))    * -20
+                  + __builtin_popcountll(board.pieces[GOLD][HORSE] & (getTraps() | getTrapNeighbors()))    * -10
+                  + __builtin_popcountll(board.pieces[GOLD][DOG] & (getTraps() | getTrapNeighbors()))      * -5
+                  + __builtin_popcountll(board.pieces[GOLD][CAT] & (getTraps() | getTrapNeighbors()))      * -3
+                  + __builtin_popcountll(board.pieces[GOLD][RABBIT] & (getTraps() | getTrapNeighbors()))   * -5
+                  - __builtin_popcountll(board.pieces[SILVER][CAMEL] & (getTraps() | getTrapNeighbors()))  * -20 
+                  - __builtin_popcountll(board.pieces[SILVER][HORSE] & (getTraps() | getTrapNeighbors()))  * -10
+                  - __builtin_popcountll(board.pieces[SILVER][DOG] & (getTraps() | getTrapNeighbors()))    * -5
+                  - __builtin_popcountll(board.pieces[SILVER][CAT] & (getTraps() | getTrapNeighbors()))    * -3
+                  - __builtin_popcountll(board.pieces[SILVER][RABBIT] & (getTraps() | getTrapNeighbors())) * -5;
 
     //guard local traps with weaker pieces
     int trapGuard = __builtin_popcountll(board.pieces[GOLD][DOG] & (getTrapNeighbors()) & 
-                      (getRow(5) | getRow(6) | getRow(7) )) * 50
+                      (getRow(5) | getRow(6) | getRow(7) )) * 20
                   + __builtin_popcountll(board.pieces[GOLD][CAT] & (getTrapNeighbors()) & 
-                      (getRow(5) | getRow(6) | getRow(7) )) * 30
+                      (getRow(5) | getRow(6) | getRow(7) )) * 10
                   - __builtin_popcountll(board.pieces[SILVER][DOG] & (getTrapNeighbors()) & 
-                      (getRow(1) | getRow(2) | getRow(3) )) * 50
+                      (getRow(1) | getRow(2) | getRow(3) )) * 20
                   - __builtin_popcountll(board.pieces[SILVER][CAT] & (getTrapNeighbors()) & 
-                      (getRow(1) | getRow(2) | getRow(3) )) * 30;
+                      (getRow(1) | getRow(2) | getRow(3) )) * 10;
 
     score = material + advance + strongCenter + rabbitCenterAvoid + trapAvoid + trapGuard;
 

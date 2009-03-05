@@ -137,7 +137,7 @@ int main(int argc, char * args[])
 
         int mode = MODE_HELP;
         int maxDepth = 4;
-        int hashBits = 20;
+        int hashBits = 24;
         string positionFile;
         string moveFile;
         string gamestateFile;

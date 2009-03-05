@@ -15,8 +15,8 @@
 #define SEARCH_MAX_COMBOS_PER_PLY 120
 
 //hash bit constants
-#define SEARCH_GAME_HIST_HASH_BITS 10
-#define SEARCH_SEARCH_HIST_HASH_BITS 10
+#define SEARCH_GAME_HIST_HASH_BITS 20
+#define SEARCH_SEARCH_HIST_HASH_BITS 20
 
 using namespace std;
 
