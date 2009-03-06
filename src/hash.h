@@ -2,9 +2,6 @@
 #define __JR_HASH_H__
 
 //hash table data structures to keep data for transpositions
-
-#define SCORE_ENTRY_EXTRA_BITS 32
-
 #define SCORE_ENTRY_EXACT 0
 #define SCORE_ENTRY_UPPER 1
 #define SCORE_ENTRY_LOWER 2
@@ -17,20 +14,18 @@
 using namespace std;
 
 //Hash entry used to keep scores and best successor on board positions
+//data is packed into a 64 bit integer as follows:
+//bit 0     : set to 1 if this hash has been already been filled with 
+//            score data
+//bit 1-2   : says wheter the score kept is exact, a lower bound, or
+//            an upper bound
+//bit 3-18  : 16 bits to store a score
+//bit 19-26 : index of the combo in the array returned by genMoves() that
+//            either is the best move from this node, or caused a beta
+//            cutoff
+//bit 27-31 : the depth this board was evaluated to
 class ScoreEntry
 {
-    //data is packed into a 64 bit integer as follows:
-    //bit 0     : set to 1 if this hash has been already been filled with 
-    //            score data
-    //bit 1-2   : says wheter the score kept is exact, a lower bound, or
-    //            an upper bound
-    //bit 3-18  : 16 bits to store a score
-    //bit 19-26 : index of the combo in the array returned by genMoves() that
-    //            either is the best move from this node, or caused a beta
-    //            cutoff
-    //bit 27-31 : the depth this board was evaluated to
-    //bit 32-63 : extra bits used to differentiate between boards that map
-    //            to the same hash key 
 
     public:
     //inline functions////////////////////////////////////////////////////////
@@ -79,13 +74,11 @@ class ScoreEntry
     }
 
     //////////////////////////////////////////////////////////////////////////
-    //returns the extra bits that contains basically another hash of the board
-    //to differentiate positions that map to the same hashkey. Note that
-    //the extra bits are given unshifted.
+    //returns the complete hash key
     //////////////////////////////////////////////////////////////////////////
-    Int64 getExtra()
+    Int64 getHash()
     {
-        return data & (((Int64)0xFFFFFFFF) << 32);
+        return hash;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -93,14 +86,15 @@ class ScoreEntry
     //extra bits are given already shifted into place
     //////////////////////////////////////////////////////////////////////////
     void set(bool filled, unsigned char scoreType, short score, 
-             unsigned char moveIndex, unsigned char depth, Int64 extra)
+             unsigned char moveIndex, unsigned char depth, Int64 hash)
     {
         data = (filled & 0x1) 
              | (((Int64)scoreType & 0x3) << 1)
              | (((Int64)score & 0xFFFF) << 3)
              | (((Int64)moveIndex & 0xFF) << 19) 
-             | (((Int64)depth & 0x1F) << 27) 
-             | extra;
+             | (((Int64)depth & 0x1F) << 27);
+
+        this->hash = hash;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -109,10 +103,12 @@ class ScoreEntry
     void reset()
     {
         data = 0;
+        hash = 0;
     }
 
     private:
     Int64 data;
+    Int64 hash; // the complete hash key
 };
 
 //Hash entry to see how many times a position occurred at the end of a turn

@@ -21,23 +21,16 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////
 Search :: Search(int scoreHashBits)
 {
-
+    //Initialize hash tables
     scorehashes.init(Int64FromIndex(scoreHashBits));
     gameHist.init(Int64FromIndex(SEARCH_GAME_HIST_HASH_BITS));
     searchHist.init(Int64FromIndex(SEARCH_SEARCH_HIST_HASH_BITS));
 
-    //create masks. Note that masks for hash keys are done from the least
-    //signficant bit, but masks for extra bits are done the other way
+    //create hash masks
     scoreHashMask = 0;
-    scoreExtraHashMask = 0;
 
     for (int i = 0; i < scoreHashBits; i++)
         scoreHashMask |= Int64FromIndex(i);
-
-    for (int i = 0; i < SCORE_ENTRY_EXTRA_BITS; i++)
-    {
-        scoreExtraHashMask |= Int64FromIndex(63 - i);
-    }
 
     gameHistHashMask = 0;
 
@@ -386,14 +379,13 @@ void Search :: addScoreEntry(Board& board, unsigned char scoreType,
     if (!entry.isFilled() || entry.getDepth() <= depth)
     {
         //check for a collision
-        if (entry.isFilled() && 
-            entry.getExtra() != (board.hash & scoreExtraHashMask))  
+        if (entry.isFilled() && entry.getHash() != board.hash)  
         {
             collisions++; 
         }
 
         entry.set(true, scoreType, score, bestMoveIndex, 
-                  depth, board.hash & scoreExtraHashMask); 
+                  depth, board.hash); 
     }
 }
 
@@ -409,8 +401,7 @@ bool Search :: getScoreEntry(Board& board, ScoreEntry& entry,
     ScoreEntry thisEntry = scorehashes.getEntry(board.hash & scoreHashMask);
     
     //check if the extra bits match and the depth is at least the one wanted
-    if (thisEntry.isFilled() && 
-        thisEntry.getExtra() == (board.hash & scoreExtraHashMask) && 
+    if (thisEntry.isFilled() && thisEntry.getHash() == board.hash && 
         thisEntry.getDepth() >= depth)
     {
         entry = thisEntry;
