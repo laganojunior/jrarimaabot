@@ -31,9 +31,8 @@ class Search
                               short beta, vector<string>& nodePV);
 
     void addScoreEntry(Board& board, unsigned char scoreType, short score,
-                       unsigned char bestMoveIndex, unsigned int depth);
-    bool getScoreEntry(Board& board, ScoreEntry& entry, 
-                       unsigned int depth);
+                       unsigned int depth, StepCombo& bestCombo);
+    bool getScoreEntry(Board& board, ScoreEntry& entry, unsigned int depth);
 
     void incrementGameHistory(Board& board);
     void decrementGameHistory(Board& board);

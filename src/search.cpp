@@ -87,16 +87,14 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     ScoreEntry thisEntry;   
     if (getScoreEntry(board,thisEntry, depth))
     {
-        //get best move from hash
-        bestIndexFromHash = thisEntry.getMoveIndex();
+
     }
 
     //Add this board to the search history
     addSearchHistory(board);
 
     //give the combos some score for move ordering
-    eval.scoreCombos(combos[0], numCombos[0], board.sideToMove, 
-                     bestIndexFromHash);
+    eval.scoreCombos(combos[0], numCombos[0], board.sideToMove);
 
     for (int i = 0; i < numCombos[0]; ++i)
     {
@@ -224,9 +222,6 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             ++numTerminalNodes;
             return beta;
         }
-
-        //get best move from hash
-        bestIndexFromHash = thisEntry.getMoveIndex();
     }
 
     //set a variable to measure the ply, which should increase the farther
@@ -246,8 +241,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     int bestIndex = 0;
 
     //give the combos some score for move ordering
-    eval.scoreCombos(combos[ply], numCombos[ply], board.sideToMove, 
-                     bestIndexFromHash);
+    eval.scoreCombos(combos[ply], numCombos[ply], board.sideToMove);
 
     //play each step, and explore each subtree
     for (int i = 0; i < numCombos[ply]; ++i) 
@@ -326,13 +320,14 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             nodePV.insert(nodePV.begin() + 1, thisPV.begin(), 
                           thisPV.end());   
 
-            bestIndex = i;
+            bestIndex = nextIndex;
 
             if (alpha >= beta) //beta cutoff
             {   
                 //Store the hash for this position and note a beta
                 //cutoff, that is: note that beta is a lower bound
-                addScoreEntry(board, SCORE_ENTRY_LOWER, beta, i, depth); 
+                addScoreEntry(board, SCORE_ENTRY_LOWER, beta, depth,
+                              combos[ply][nextIndex]); 
 
                 //give the killer score for this type of move an increase
                 //depending on the depth to go of this search.
@@ -354,12 +349,14 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         //if alpha remains unchanged, then it might be that the true value
         //is actually under alpha, so alpha is a upperbound
 
-        addScoreEntry(board, SCORE_ENTRY_UPPER, alpha, bestIndex, depth);
+        addScoreEntry(board, SCORE_ENTRY_UPPER, alpha, depth,
+                      combos[ply][bestIndex]);
     }   
     else
     {
         //alpha is actually an exact value of the score
-        addScoreEntry(board, SCORE_ENTRY_EXACT, alpha, bestIndex, depth);
+        addScoreEntry(board, SCORE_ENTRY_EXACT, alpha, depth,
+                      combos[ply][bestIndex]);
     }
         
     return alpha;
@@ -371,8 +368,8 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 //table
 //////////////////////////////////////////////////////////////////////////////
 void Search :: addScoreEntry(Board& board, unsigned char scoreType,
-                            short score,
-                            unsigned char bestMoveIndex, unsigned int depth)
+                            short score, unsigned int depth,
+                            StepCombo& bestCombo)
 {
     ScoreEntry& entry = scorehashes.getEntry(board.hash & scoreHashMask);
 
@@ -384,8 +381,65 @@ void Search :: addScoreEntry(Board& board, unsigned char scoreType,
             collisions++; 
         }
 
-        entry.set(true, scoreType, score, bestMoveIndex, 
-                  depth, board.hash); 
+        //Check for a push, pull, or pass
+        unsigned char moveType;
+        if (bestCombo.stepCost >= 2)
+        {
+            if (bestCombo.steps[0].isPass())
+            {
+                moveType = SCORE_MOVE_PASS;
+            }
+            else
+            if (colorOfPiece(bestCombo.steps[0].getPiece()) 
+                             == board.sideToMove)
+            {
+                moveType = SCORE_MOVE_PUSH;
+            }
+            else
+            {
+                moveType = SCORE_MOVE_PULL;
+            }
+        }   
+        else
+        {
+            if (bestCombo.steps[0].isPass())
+            {
+                moveType = SCORE_MOVE_PASS;
+            }
+            else
+                moveType = SCORE_MOVE_1STEP;
+        }
+
+        switch (moveType)
+        {
+            case SCORE_MOVE_PASS:
+            {
+                
+            entry.set(true, scoreType, score, depth, moveType, 0, 0, 0, 0, 
+                      board.hash); 
+            }break;
+
+            case SCORE_MOVE_1STEP:
+            {
+                
+            entry.set(true, scoreType, score, depth, moveType, 
+                      bestCombo.steps[0].getFrom(), 
+                      bestCombo.steps[0].getTo(), 
+                      0, 0, board.hash); 
+            }break;
+
+            case SCORE_MOVE_PUSH:
+            case SCORE_MOVE_PULL:
+            {
+                
+            entry.set(true, scoreType, score, depth, moveType, 
+                      bestCombo.steps[0].getFrom(), 
+                      bestCombo.steps[0].getTo(), 
+                      bestCombo.steps[1].getFrom(), 
+                      bestCombo.steps[1].getTo(), 
+                      board.hash); 
+            }break;
+        }
     }
 }
 

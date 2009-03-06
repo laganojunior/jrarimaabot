@@ -128,8 +128,7 @@ bool Eval :: isWin(Board& board, unsigned char color)
 //index referenced by the hashtable if there are any, if one does not
 //wish to provide one, it should be set to -1
 //////////////////////////////////////////////////////////////////////////////
-void Eval :: scoreCombos(StepCombo combos[], int num, 
-                        unsigned char color, int bestIndex)
+void Eval :: scoreCombos(StepCombo combos[], int num, unsigned char color)
 {
     for (int i = 0; i < num; ++i)
     {
@@ -157,8 +156,4 @@ void Eval :: scoreCombos(StepCombo combos[], int num,
                                      [combos[i].steps[0].getTo()]
                                      [color] * 10;
     }
-
-    //give some bonus to the purported best move
-    if (bestIndex != -1)
-        combos[bestIndex].score  += 10000;
 }

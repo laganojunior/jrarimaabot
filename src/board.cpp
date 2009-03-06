@@ -974,6 +974,66 @@ unsigned int Board :: genMoves(StepCombo combos[])
 }
 
 //////////////////////////////////////////////////////////////////////////////
+//Attempt to generate the 1-step move using the from and to square specified. 
+//If it is a legal move, then it is written onto the combo given and true is
+//return. If it is not, false is returned.
+//////////////////////////////////////////////////////////////////////////////
+bool Board :: genMove(StepCombo& combo, unsigned char from, unsigned char to)
+{
+    //check if there are steps available 
+    if (stepsLeft < 1)
+        return false;
+
+    //Check if there is a piece there on the current side to move
+    unsigned char piece = getPieceAt(from);
+
+    if (piece == NO_PIECE || colorOfPiece(piece) != sideToMove)
+        return false;
+
+    //Check if this piece is frozen
+    if (isFrozen(from, piece))
+        return false;
+
+    //Check if the destination square is occupied
+    if (getAllPieces() & Int64FromIndex(to))
+        return false;
+
+    //At this point, it should be a legal move, so generate it
+    combo.reset();
+    Step step;
+    step.genMove(piece,from,to);
+    combo.addStep(step);
+
+    //If this is from near a trap, then it could be that moving this piece
+    //leads to a capture of a friendly piece
+    if (Int64 trapsNear = getTrapNeighbors() & Int64FromIndex(from))
+    {
+        //temporarily move the piece
+        removePieceFromBoard(from, sideToMove, typeOfPiece(piece));
+        writePieceOnBoard(to, sideToMove, typeOfPiece(piece));
+
+        //check if the trap square is now without any friends
+        unsigned char trap = bitScanForward(trapsNear);
+        unsigned char trappedPiece = getPieceAt(trap);
+        if (trappedPiece == NO_PIECE || 
+            colorOfPiece(trappedPiece) != sideToMove
+            && !hasFriends(trap, trappedPiece))
+        {
+            //write the capture
+            Step step;
+            step.genCapture(trappedPiece, trap);
+            combo.addStep(step);
+        }
+
+        //move back the piece
+        removePieceFromBoard(to, sideToMove, typeOfPiece(piece));
+        writePieceOnBoard(from, sideToMove, typeOfPiece(piece));
+    }
+
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 //Prints the board onto the stream designated by out
 //////////////////////////////////////////////////////////////////////////////
 ostream& operator<<(ostream& out, Board b)

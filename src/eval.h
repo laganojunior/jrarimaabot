@@ -13,8 +13,7 @@ class Eval
     short evalBoard(Board& board, unsigned char color);
     bool isWin(Board& board, unsigned char color);
 
-    void scoreCombos(StepCombo combos[], int num, unsigned char color,
-                     int bestIndex); 
+    void scoreCombos(StepCombo combos[], int num, unsigned char color); 
 
     //array used to keep track of whenever a piece is moved from one
     //place to another in a certain ply, if the move causes a beta cut-off.
