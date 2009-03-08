@@ -324,7 +324,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
     //Check if the killer moves are available to play here, and add
     //them to the pre gen list
-    /*for (int i = 0; i < killer.size(); i++)
+    for (int i = 0; i < killer.size(); i++)
     {
         StepCombo killerCombo;
 
@@ -358,7 +358,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                 preGenSteps.push_back(killerCombo);
             }
         }
-    }*/
+    }
 
     
     //if there are any pre-gen steps, explore them first
