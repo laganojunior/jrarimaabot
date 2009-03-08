@@ -333,14 +333,19 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             if (board.gen1Step(killerCombo, killer[i].from1, killer[i].to1))
             {
                 //Make sure the move isn't already in the pre gen list
+                bool alreadyIn = false;
                 for (int j = 0; j < preGenSteps.size(); j++)
                 {
                     if (preGenSteps[j] == killerCombo)
-                        continue;   
+                    {
+                        alreadyIn = true;
+                        break;
+                    }   
                 }
 
                 //place the killer move onto the pre gen list
-                preGenSteps.push_back(killerCombo);
+                if (!alreadyIn)
+                    preGenSteps.push_back(killerCombo);
             }
         }
         else if (killer[i].movetype == SCORE_MOVE_2STEP)
@@ -349,13 +354,19 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                                             killer[i].from2))
             {
                 //Make sure the move isn't already in the pre gen list
+                bool alreadyIn = false;
                 for (int j = 0; j < preGenSteps.size(); j++)
                 {
                     if (preGenSteps[j] == killerCombo)
-                        continue;   
+                    {
+                        alreadyIn = true;
+                        break;
+                    }   
                 }
 
-                preGenSteps.push_back(killerCombo);
+                                //place the killer move onto the pre gen list
+                if (!alreadyIn)
+                    preGenSteps.push_back(killerCombo);
             }
         }
     }
