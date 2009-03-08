@@ -109,6 +109,17 @@ class StepCombo
     void addCombo(StepCombo& combo);
 
     void reset();
+
+    bool operator==(StepCombo& comp)
+    {
+        for (int i = 0; i < numSteps; i++)
+        {
+            if (comp.steps[i].data != steps[i].data)
+                return false;  
+        }
+        
+        return true;
+    }     
     
     Step steps[MAX_STEPS_IN_COMBO]; //the set of steps in this combo. 
                                     //the number was purposefully chosen to

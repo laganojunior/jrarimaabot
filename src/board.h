@@ -51,7 +51,11 @@ class Board
     void unchangeTurn(unsigned int oldStepsLeft);
 
     unsigned int genMoves(StepCombo combos[]);
-    bool genMove(StepCombo& combo, unsigned char from, unsigned char to);
+    bool gen1Step(StepCombo& combo, unsigned char from, unsigned char to);
+    bool gen2Step(StepCombo& combo, unsigned char from1, unsigned char to1,
+                                    unsigned char from2);
+
+    bool moveLeadsToCapture(Step& step, Step& captureStep);
 
     short eval(unsigned char color);
     bool isWin(unsigned char color);

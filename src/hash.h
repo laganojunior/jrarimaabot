@@ -6,10 +6,8 @@
 #define SCORE_ENTRY_UPPER 1
 #define SCORE_ENTRY_LOWER 2
 
-#define SCORE_MOVE_PASS  0
 #define SCORE_MOVE_1STEP 1
-#define SCORE_MOVE_PUSH  2
-#define SCORE_MOVE_PULL  3
+#define SCORE_MOVE_2STEP 2
 
 #include "int64.h"
 #include <assert.h>
@@ -29,8 +27,9 @@ using namespace std;
 //bit 24-25 : type of move stored
 //bit 26-31 : index for source square for first moving piece
 //bit 32-37 : index for destination square for first moving piece
-//bit 38-43 : index for source square for second moving piece
-//bit 44-49 : index for destination square for first moving piece
+//bit 38-43 : index for source square for second moving piece, note that
+//            the destination from the second piece must be the source square
+//            of the first piece
 class ScoreEntry
 {
 
@@ -104,15 +103,6 @@ class ScoreEntry
     }
 
     //////////////////////////////////////////////////////////////////////////
-    //returns the index of the destination square the second piece is moving 
-    //to
-    //////////////////////////////////////////////////////////////////////////
-    unsigned char getTo2()
-    {
-        return (data >> 44) & 0x3F;
-    }
-
-    //////////////////////////////////////////////////////////////////////////
     //returns the complete hash key
     //////////////////////////////////////////////////////////////////////////
     Int64 getHash()
@@ -126,8 +116,7 @@ class ScoreEntry
     //////////////////////////////////////////////////////////////////////////
     void set(bool filled, unsigned char scoreType, short score, 
              unsigned char depth, unsigned char moveType, unsigned char from1,
-             unsigned char to1, unsigned char from2, unsigned char to2, 
-             Int64 hash)
+             unsigned char to1, unsigned char from2, Int64 hash)
     {
         data = (filled & 0x1) 
              | (((Int64)scoreType & 0x3) << 1)
@@ -136,8 +125,7 @@ class ScoreEntry
              | (((Int64)moveType & 0x3) << 24)
              | (((Int64)from1 & 0x3F) << 26)
              | (((Int64)to1 & 0x3F) << 32)
-             | (((Int64)from2 & 0x3F) << 38)
-             | (((Int64)to2 & 0x3F) << 44);
+             | (((Int64)from2 & 0x3F) << 38);
 
         this->hash = hash;
     }

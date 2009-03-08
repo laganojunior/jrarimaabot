@@ -103,21 +103,27 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
         {
             bestMove = search.searchRoot(board, currDepth);
-
+            
             logFile << search.getShortStatString() << endl;
+            //cerr << search.getShortStatString() << endl;
 
             totalMillis += search.millis;
             totalHashHits += search.hashHits;
             totalHashOverwrites += search.collisions;
             totalNodes += search.numTotalNodes;
+
+            //If the score is so great, then it's probably a win, so don't
+            //search any further
+            if (search.score >= 25000)
+                break;
         }
 
         logFile << "Finished Search\n";
         logFile << "Total nodes: " << totalNodes << endl;
-        logFile << "Total Time: " << totalMillis << "ms\n";
+        logFile << "Total Time: " << totalMillis + 1 << "ms\n";
         logFile << "Hash Table Hits: " << totalHashHits << endl;
         logFile << "Hash Colliding Overwrites: "<< totalHashOverwrites<< endl;       
-        logFile << "Avg Nodes/Sec: "<< totalNodes * 1000/ totalMillis << endl;
+        logFile << "Avg Nodes/Sec: "<< totalNodes * 1000/ (totalMillis+1) << endl;
         logFile << "Playing Move " << bestMove.toString() << endl;
         cout << bestMove.toString() << endl;
     }
@@ -201,7 +207,7 @@ int main(int argc, char * args[])
                 cout << "Generated these moves:\n";
                 for (int i = 0; i < num; i++)
                 {
-                    cout << combos[i].toString() << endl;
+                    cout << combos[i].toString() << " " << combos[i].stepCost << endl;
                 }
                 cout << board.stepsLeft << endl;
             }

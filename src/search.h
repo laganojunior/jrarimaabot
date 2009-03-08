@@ -29,10 +29,13 @@ class Search
     StepCombo searchRoot(Board& board, int depth);
     short searchNode(Board& board, int depth, short alpha,  
                               short beta, vector<string>& nodePV);
+    short doMoveAndSearch(Board& board, int depth, short alpha,  
+                          short beta, vector<string>& nodePV,
+                          StepCombo& combo);
 
     void addScoreEntry(Board& board, unsigned char scoreType, short score,
                        unsigned int depth, StepCombo& bestCombo);
-    bool getScoreEntry(Board& board, ScoreEntry& entry, unsigned int depth);
+    bool getScoreEntry(Board& board, ScoreEntry& entry);
 
     void incrementGameHistory(Board& board);
     void decrementGameHistory(Board& board);

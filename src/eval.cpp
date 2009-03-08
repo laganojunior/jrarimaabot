@@ -75,7 +75,7 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     int rabbitCenterAvoid = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(0)) * -10
                           + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(1)) * -5
                           + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(2)) * -3
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 10;
+                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 10
                           - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(0)) * -10
                           - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(1)) * -5
                           - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(2)) * -3
@@ -150,10 +150,58 @@ void Eval :: scoreCombos(StepCombo combos[], int num, unsigned char color)
             combos[i].score += 50 * 
                                (MAX_TYPES - combos[i].enemyCaptureType);
         }
+    }
+}
 
-        //give some score for killer moves
-        combos[i].score += killermove[combos[i].steps[0].getFrom()] 
-                                     [combos[i].steps[0].getTo()]
-                                     [color] * 10;
+//////////////////////////////////////////////////////////////////////////////
+//Get a list of killer moves to try for that ply
+//////////////////////////////////////////////////////////////////////////////
+vector<KillerMove>& Eval :: getKillerMoves(unsigned int ply)
+{
+    return killermoves[ply];
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Increases the killer score for the specified combo for causing cutoffs at
+//the specified depth
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: addKillerMove(StepCombo& combo, unsigned int ply)
+{
+    //Search if the entry is already present, and just add points to it
+    bool found = false;
+    int lowestScore = 1000000;
+    int lowestIndex = -1;
+    for (int i = 0; i < killermoves[ply].size(); i++)
+    {
+        if (killermoves[ply][i] == combo)
+        {
+            killermoves[ply][i].score += 1;
+            found = true;
+            break;
+        }
+
+        if (killermoves[ply][i].score < lowestScore)
+        {
+            lowestScore = killermoves[ply][i].score;
+            lowestIndex = i;
+        }
+    }
+
+    //if it wasn't found, then add it. If the array is already full, then
+    //just remove the lowest one
+    if (!found)
+    {
+        if (killermoves[ply].size() < EVAL_KILLER_MOVES_PER_PLY)
+        {
+            KillerMove killer;
+            killer = combo;   
+            killer.score = 1;
+            killermoves[ply].push_back(killer);
+        }
+        else
+        {
+            killermoves[ply][lowestIndex] = combo;
+            killermoves[ply][lowestIndex].score = 1;
+        }
     }
 }
