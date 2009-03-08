@@ -532,19 +532,16 @@ unsigned int Board :: genMoves(StepCombo combos[])
                 //moving
                 if (!hasFriends(killSquare,piece))
                 {
-                    
-                    unsigned char capturedPiece;
+                    unsigned char capturedPiece = getPieceAt(killSquare);
 
-                    if ((capturedPiece = getPieceAt(killSquare)) != NO_PIECE)
+                    if (capturedPiece != NO_PIECE && 
+                        colorOfPiece(capturedPiece) == sideToMove)
                     {
                         //piece on trap will get killed if this piece is moved
                         //so set moves from here to capture this piece. 
-                        if (colorOfPiece(capturedPiece) == sideToMove)
-                        {
-                            leadsToCapture[from] = true;
-                            pieceCaptured[from] = capturedPiece;
-                            captureSquare[from] = killSquare;
-                        }
+                        leadsToCapture[from] = true;
+                        pieceCaptured[from] = capturedPiece;
+                        captureSquare[from] = killSquare;
                     }
                     else 
                     {
@@ -810,7 +807,8 @@ unsigned int Board :: genMoves(StepCombo combos[])
                         combos[numCombos].addStep(step);
 
                         //write capture steps if necessary
-                        if (canKillItself[from] && to == captureSquare[from])
+                        if (canKillItself[from] 
+                            && lowerSquare == captureSquare[from])
                         {
                             step.genCapture(piece, captureSquare[from]);
                             combos[numCombos].addStep(step);

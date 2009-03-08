@@ -207,9 +207,8 @@ int main(int argc, char * args[])
                 cout << "Generated these moves:\n";
                 for (int i = 0; i < num; i++)
                 {
-                    cout << combos[i].toString() << " " << combos[i].stepCost << endl;
+                    cout << combos[i].toString() << endl;
                 }
-                cout << board.stepsLeft << endl;
             }
             else if (string(args[i]) == string("--eval"))
             {

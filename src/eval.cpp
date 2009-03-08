@@ -30,20 +30,20 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     //rabbit advancement
     int advance = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(0)) * 30000
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(1)) * 50
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 20
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 15
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 5
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 5
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 40
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 20
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 15
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 10
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(6)) * 5
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 50
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 20
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(7)) * 30000
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(6)) * 50
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 20
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 15
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 5
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(2)) * 5
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 40
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 20
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 15
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(2)) * 10
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(1)) * 5
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(0)) * 50;
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(0)) * 20;
 
     //keeps center control with the strong board.pieces
     int strongCenter = __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(0)) * 25

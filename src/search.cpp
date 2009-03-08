@@ -320,11 +320,11 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
 
     //Get a list of killer moves to try
-    vector<KillerMove>& killer = eval.getKillerMoves(board.sideToMove);
+    vector<KillerMove>& killer = eval.getKillerMoves(ply);
 
     //Check if the killer moves are available to play here, and add
     //them to the pre gen list
-    for (int i = 0; i < killer.size(); i++)
+    /*for (int i = 0; i < killer.size(); i++)
     {
         StepCombo killerCombo;
 
@@ -332,6 +332,14 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         {
             if (board.gen1Step(killerCombo, killer[i].from1, killer[i].to1))
             {
+                //Make sure the move isn't already in the pre gen list
+                for (int j = 0; j < preGenSteps.size(); j++)
+                {
+                    if (preGenSteps[j] == killerCombo)
+                        continue;   
+                }
+
+                //place the killer move onto the pre gen list
                 preGenSteps.push_back(killerCombo);
             }
         }
@@ -340,10 +348,17 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             if (board.gen2Step(killerCombo, killer[i].from1, killer[i].to1,
                                             killer[i].from2))
             {
+                //Make sure the move isn't already in the pre gen list
+                for (int j = 0; j < preGenSteps.size(); j++)
+                {
+                    if (preGenSteps[j] == killerCombo)
+                        continue;   
+                }
+
                 preGenSteps.push_back(killerCombo);
             }
         }
-    }
+    }*/
 
     
     //if there are any pre-gen steps, explore them first
@@ -351,10 +366,12 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     {
         bestCombo = preGenSteps[0];
 
+        int index = 0;
         for (vector<StepCombo>::iterator next = preGenSteps.begin();
              next != preGenSteps.end();
              next++)
         {
+            
             short nodeScore = doMoveAndSearch(board, depth, alpha, 
                                               beta, nodePV, *next); 
 
@@ -371,10 +388,10 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
                     //increase killer score
                     eval.addKillerMove(*next, ply);
-
                     return beta;
                 }
             }
+            index++;
         }       
     }
 
