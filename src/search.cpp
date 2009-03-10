@@ -364,7 +364,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                     }   
                 }
 
-                                //place the killer move onto the pre gen list
+                //place the killer move onto the pre gen list
                 if (!alreadyIn)
                     preGenSteps.push_back(killerCombo);
             }
@@ -433,11 +433,20 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
         //Check if this combo is in the pre gen list, if so, just don't
         //research it
+        bool redo = false;
         for (int j = 0; j < preGenSteps.size(); j++)
         {
             if (combos[ply][nextIndex] == preGenSteps[j])
-                continue;
+            {
+                redo = true;
+                break;
+            }
         }
+
+        if (redo)
+            continue;
+
+        //explore the subtree for this move.
 
         short nodeScore = doMoveAndSearch(board, depth, alpha, beta, nodePV, 
                                           combos[ply][nextIndex]); 
