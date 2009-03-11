@@ -151,7 +151,7 @@ StepCombo Search :: searchRoot(Board& board, int depth)
         unsigned int nextIndex = getNextBestCombo(0);
 
         //check that this wasn't the last best successor, which was already
-        //checked
+        //searched
         if (combos[0][nextIndex] == lastBest)
             continue;
 
@@ -533,6 +533,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
         if (getGameHistoryOccurences(board) >= 2)
         {   
             board.unchangeTurn(oldnumsteps);
+            removeSearchHistory(board);
             board.undoCombo(combo);
             return alpha;
         }
