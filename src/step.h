@@ -108,6 +108,10 @@ class StepCombo
     void addStep(Step step);
     void addCombo(StepCombo& combo);
 
+    unsigned char getFrom1();
+    unsigned char getTo1();
+    unsigned char getFrom2();
+
     void reset();
 
     bool operator==(StepCombo& comp)

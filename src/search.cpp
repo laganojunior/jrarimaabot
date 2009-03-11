@@ -377,7 +377,6 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     {
         bestCombo = preGenSteps[0];
 
-        int index = 0;
         for (vector<StepCombo>::iterator next = preGenSteps.begin();
              next != preGenSteps.end();
              next++)
@@ -402,7 +401,6 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                     return beta;
                 }
             }
-            index++;
         }       
     }
 
@@ -413,7 +411,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     if (numCombos[ply] == 0 ) 
     {
         //loss by immobility 
-        return -30000; 
+        return -30000;
     }
 
     //if there were no pre gen steps, set the first best move now
@@ -607,34 +605,10 @@ void Search :: addScoreEntry(Board& board, unsigned char scoreType,
             moveType = SCORE_MOVE_1STEP;
         }
 
-        switch (moveType)
-        {
-
-            case SCORE_MOVE_1STEP:
-            {
-                
-            entry.set(true, scoreType, score, depth, moveType, 
-                      bestCombo.steps[0].getFrom(), 
-                      bestCombo.steps[0].getTo(), 
-                      0, board.hash); 
-            }break;
-
-            case SCORE_MOVE_2STEP:
-            {
-            //note that second step can denote a capture, so the actual
-            //second moving step can be afterward
-            unsigned int secondMoveIndex = 1;
-
-            if (bestCombo.steps[1].isCapture())
-                secondMoveIndex = 2;
-    
-            entry.set(true, scoreType, score, depth, moveType, 
-                      bestCombo.steps[0].getFrom(), 
-                      bestCombo.steps[0].getTo(), 
-                      bestCombo.steps[secondMoveIndex].getFrom(),  
-                      board.hash); 
-            }break;
-        }
+        entry.set(true, scoreType, score, depth, moveType, 
+                  bestCombo.getFrom1(), 
+                  bestCombo.getTo1(), 
+                  bestCombo.getFrom2(), board.hash); 
     }
 }
 

@@ -28,25 +28,17 @@ class KillerMove
         if (combo.stepCost == 1)
         {
             movetype = SCORE_MOVE_1STEP;
-            from1 = combo.steps[0].getFrom();
-            to1 = combo.steps[0].getTo();
+            from1 = combo.getFrom1();
+            to1 = combo.getFrom2();
             return *this;
         }
         
         if (combo.stepCost == 2)
         {
             movetype = SCORE_MOVE_2STEP;
-            from1 = combo.steps[0].getFrom();
-            to1 = combo.steps[0].getTo();
-
-            //note that second step can denote a capture, so the actual
-            //second moving step can be afterward
-            unsigned int secondMoveIndex = 1;
-
-            if (combo.steps[1].isCapture())
-                secondMoveIndex = 2;
-
-            from2 = combo.steps[secondMoveIndex].getFrom();
+            from1 = combo.getFrom1();
+            to1   = combo.getTo1();
+            from2 = combo.getFrom2();
             return *this;
         }
     }
@@ -54,25 +46,18 @@ class KillerMove
     bool operator==(StepCombo& combo)
     {
         if (combo.stepCost == 1 && movetype == SCORE_MOVE_1STEP
-            && from1 == combo.steps[0].getFrom() 
-            && to1 == combo.steps[0].getTo())
+            && from1 == combo.getFrom1()
+            && to1 == combo.getTo1())
         {
             return true;
         }
 
         if (combo.stepCost == 2 && movetype == SCORE_MOVE_2STEP
-            && from1 == combo.steps[0].getFrom() 
-            && to1 == combo.steps[0].getTo())
+            && from1 == combo.getFrom1()
+            && to1   == combo.getTo1()
+            && from2 == combo.getFrom2())
         {
-            //note that second step can denote a capture, so the actual
-            //second moving step can be afterward
-            unsigned int secondMoveIndex = 1;
-
-            if (combo.steps[1].isCapture())
-                secondMoveIndex = 2;
-
-            if (from2 == combo.steps[secondMoveIndex].getFrom())
-                return true;
+            return true;
         }
 
         return false;
@@ -96,7 +81,8 @@ class Eval
     //at other nodes at similar depths
     vector<KillerMove> killermoves[SEARCH_MAX_DEPTH];
 
-    
+    //array used to keep counts of when a certain move turned out to be
+    //the best move for that ply
 };
 
 #endif
