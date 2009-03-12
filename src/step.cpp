@@ -258,6 +258,57 @@ void StepCombo :: addCombo(StepCombo& combo)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+//Return the source square that the first moving piece is moving from. Returns
+//ILLEGAL_SQUARE if there is no such square
+//////////////////////////////////////////////////////////////////////////////
+unsigned char StepCombo :: getFrom1()
+{
+    if (steps[0].isPass())
+    {
+        return ILLEGAL_SQUARE;
+    }
+
+    return steps[0].getFrom();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Return the destination square that the first piece is moving to. Returns
+//ILLEGAL_SQUARE if there is no such square
+//////////////////////////////////////////////////////////////////////////////
+unsigned char StepCombo :: getTo1()
+{
+    if (steps[0].isPass())
+    {
+        return ILLEGAL_SQUARE;
+    }
+    
+    return steps[0].getTo();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Return the source square that the second piece is moving from. Note that
+//there is no getTo2() function as it is assumed that the second piece is
+//moving to the square that the first piece moved from
+//////////////////////////////////////////////////////////////////////////////
+unsigned char StepCombo :: getFrom2()
+{
+    if (stepCost < 2)
+        return ILLEGAL_SQUARE;
+
+    if (steps[0].isPass())
+        return ILLEGAL_SQUARE;
+
+    //note that second step can denote a capture, so the actual
+    //second moving step can be afterward
+    unsigned int secondMoveIndex = 1;
+
+    if (steps[1].isCapture())
+        secondMoveIndex = 2;
+
+    return steps[secondMoveIndex].getFrom();
+}
+
+//////////////////////////////////////////////////////////////////////////////
 //resets this combo to a blank combo
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: reset()

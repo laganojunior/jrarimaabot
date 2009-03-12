@@ -2,9 +2,8 @@
 #define __JR_STEP_H__
 
 #include "piece.h"
+#include "defines.h"
 #include <string>
-
-#define MAX_STEPS_IN_COMBO 20
 
 using namespace std;
 
@@ -108,7 +107,22 @@ class StepCombo
     void addStep(Step step);
     void addCombo(StepCombo& combo);
 
+    unsigned char getFrom1();
+    unsigned char getTo1();
+    unsigned char getFrom2();
+
     void reset();
+
+    bool operator==(StepCombo& comp)
+    {
+        for (int i = 0; i < numSteps; i++)
+        {
+            if (comp.steps[i].data != steps[i].data)
+                return false;  
+        }
+        
+        return true;
+    }     
     
     Step steps[MAX_STEPS_IN_COMBO]; //the set of steps in this combo. 
                                     //the number was purposefully chosen to

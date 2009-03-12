@@ -532,19 +532,16 @@ unsigned int Board :: genMoves(StepCombo combos[])
                 //moving
                 if (!hasFriends(killSquare,piece))
                 {
-                    
-                    unsigned char capturedPiece;
+                    unsigned char capturedPiece = getPieceAt(killSquare);
 
-                    if ((capturedPiece = getPieceAt(killSquare)) != NO_PIECE)
+                    if (capturedPiece != NO_PIECE && 
+                        colorOfPiece(capturedPiece) == sideToMove)
                     {
                         //piece on trap will get killed if this piece is moved
                         //so set moves from here to capture this piece. 
-                        if (colorOfPiece(capturedPiece) == sideToMove)
-                        {
-                            leadsToCapture[from] = true;
-                            pieceCaptured[from] = capturedPiece;
-                            captureSquare[from] = killSquare;
-                        }
+                        leadsToCapture[from] = true;
+                        pieceCaptured[from] = capturedPiece;
+                        captureSquare[from] = killSquare;
                     }
                     else 
                     {
@@ -810,7 +807,8 @@ unsigned int Board :: genMoves(StepCombo combos[])
                         combos[numCombos].addStep(step);
 
                         //write capture steps if necessary
-                        if (canKillItself[from] && to == captureSquare[from])
+                        if (canKillItself[from] 
+                            && lowerSquare == captureSquare[from])
                         {
                             step.genCapture(piece, captureSquare[from]);
                             combos[numCombos].addStep(step);
@@ -956,22 +954,159 @@ unsigned int Board :: genMoves(StepCombo combos[])
         }
     }
 
-    //generate the move to pass the turn
-    combos[numCombos].reset();
-    for (int i = 0; i < stepsLeft; i++)
-    {
-        Step step;
-        step.genPass();
-        
-        combos[numCombos].addStep(step);
-    } 
-    combos[numCombos].hasFriendlyCapture = false;
-    combos[numCombos].hasEnemyCapture = false;
-    ++numCombos;
-
-
     return numCombos;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//Attempt to generate the 1-step move using the from and to square specified. 
+//If it is a legal move, then it is written onto the combo given and true is
+//return. If it is not, false is returned.
+//////////////////////////////////////////////////////////////////////////////
+bool Board :: gen1Step(StepCombo& combo, unsigned char from, unsigned char to)
+{
+    //check if there are steps available 
+    if (stepsLeft < 1)
+        return false;
+
+    //Check if there is a piece there on the current side to move
+    unsigned char piece = getPieceAt(from);
+
+    if (from == ILLEGAL_SQUARE || to == ILLEGAL_SQUARE)
+        return false;
+
+    if (piece == NO_PIECE || colorOfPiece(piece) != sideToMove)
+        return false;
+
+    //Check if this piece is frozen
+    if (isFrozen(from, piece))
+        return false;
+
+    //Check if the destination square is occupied
+    if (getAllPieces() & Int64FromIndex(to))
+        return false;
+
+    //At this point, it should be a legal move, so generate it
+    combo.reset();
+    Step step;
+    step.genMove(piece,from,to);
+    combo.addStep(step);
+
+    //check if the move leads to capture
+    Step captureStep;
+    if (moveLeadsToCapture(step,captureStep))
+        combo.addStep(captureStep);
+
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Attempt to generate the 2 step move, specified by the 2 from/to pairs in
+//order. If it can be done, the move is written onto the combo given, and
+//true is returned. If not, false is returned
+//////////////////////////////////////////////////////////////////////////////
+bool Board :: gen2Step(StepCombo& combo, unsigned char from1, 
+                       unsigned char to1, unsigned char from2)
+{   
+    //Check if 2 steps can be done
+    if (stepsLeft < 2)
+        return false;
+
+    //Check if there are pieces on the two squares
+    unsigned char piece1 = getPieceAt(from1);
+    unsigned char piece2 = getPieceAt(from1);
+
+    if (from1 == ILLEGAL_SQUARE || to1 == ILLEGAL_SQUARE || 
+        from2 == ILLEGAL_SQUARE)
+        return false;
+
+    if (piece1 == NO_PIECE || piece2 == NO_PIECE)
+        return false;
+
+    combo.reset();
+
+    //Branch off wheter this is a push or pull
+    if (colorOfPiece(piece1) == sideToMove)
+    {
+        // first piece is from the player to move, this is a pulled
+
+        // check if the other piece is of the opponent and can be pulled.
+        // Note that higher ranking pieces have lower numerical type values
+        if (colorOfPiece(piece2) == sideToMove ||
+            typeOfPiece(piece2) <= typeOfPiece(piece1))
+            return false;
+    }
+    else
+    {
+        // this is a push
+
+        // check if the other piece is of the side to move and can push
+        // the first piece
+        // Note that higher ranking pieces have lower numerical type values
+        if (colorOfPiece(piece2) != sideToMove ||
+            typeOfPiece(piece2) >= typeOfPiece(piece1))
+            return false;
+    }   
+
+
+    // Generate the pushing move, and check if that leads to any captures
+    Step step, captureStep;
+    step.genMove(piece1, from1, to1);
+    combo.addStep(step);
+
+    if (moveLeadsToCapture(step, captureStep))
+        combo.addStep(captureStep);
+
+    // Generate the step to finish the pull, and check for captures
+    step.genMove(piece2, from2, from1);
+    combo.addStep(step);
+
+    if (moveLeadsToCapture(step, captureStep))
+        combo.addStep(captureStep); 
+
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Check if a step would lead to a capture immediately after being played.
+//If it does, the capture step is written on the variable given,
+//and true is returned. If not, false is returned.
+//////////////////////////////////////////////////////////////////////////////
+bool Board :: moveLeadsToCapture(Step& step, Step& captureStep)
+{
+    unsigned char from = step.getFrom();
+    unsigned char to = step.getTo();
+    unsigned char piece = step.getPiece();
+    unsigned char color = colorOfPiece(piece);
+
+    bool capture = false;
+    //If it leads to immediate capture, it must be that piece is moving from
+    //near a trap
+    if (Int64 trapsNear = getTraps() & getNeighbors(from))
+    {
+        //temporarily move the piece
+        removePieceFromBoard(from, color, typeOfPiece(piece));
+        writePieceOnBoard(to, color, typeOfPiece(piece));
+
+        //check if the trap square is now without any friends
+        unsigned char trap = bitScanForward(trapsNear);
+        unsigned char trappedPiece = getPieceAt(trap);
+        if (trappedPiece != NO_PIECE && 
+            colorOfPiece(trappedPiece) == color
+            && !hasFriends(trap, trappedPiece))
+        {
+            //write the capture
+            captureStep.genCapture(trappedPiece, trap);
+            capture = true;
+        }
+
+        //move back the piece
+        removePieceFromBoard(to, sideToMove, typeOfPiece(piece));
+        writePieceOnBoard(from, sideToMove, typeOfPiece(piece));
+    }
+
+    return capture;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 //Prints the board onto the stream designated by out

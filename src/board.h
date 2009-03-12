@@ -51,6 +51,11 @@ class Board
     void unchangeTurn(unsigned int oldStepsLeft);
 
     unsigned int genMoves(StepCombo combos[]);
+    bool gen1Step(StepCombo& combo, unsigned char from, unsigned char to);
+    bool gen2Step(StepCombo& combo, unsigned char from1, unsigned char to1,
+                                    unsigned char from2);
+
+    bool moveLeadsToCapture(Step& step, Step& captureStep);
 
     short eval(unsigned char color);
     bool isWin(unsigned char color);
@@ -67,7 +72,7 @@ class Board
 
     //hashes
     Int64 hash; //key that is used to access the entry in the transposition
-                //table
+                //table, incorporates steps left and color
 
     Int64 hashPiecesOnly; //key that is only dependent on the piece state,
                           //not on the steps left and player to move

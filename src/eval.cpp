@@ -3,6 +3,21 @@
 #include "int64.h"
 
 //////////////////////////////////////////////////////////////////////////////
+//Clear all stored data from a previous search such as killer move data
+//and history score data
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: reset()
+{
+    //reset killer moves
+    for (int i = 0; i < SEARCH_MAX_DEPTH; i++)
+        killermoves[i].resize(0);
+
+    //reset history scores
+    memset(historyScore, 0, sizeof(unsigned char) * (NUM_SQUARES+1)
+                          * (NUM_SQUARES+1) * (NUM_SQUARES+1) * MAX_COLORS);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 //Returns a static evaluation score of the board in the
 //perspective of the player given
 //////////////////////////////////////////////////////////////////////////////
@@ -30,20 +45,20 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     //rabbit advancement
     int advance = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(0)) * 30000
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(1)) * 50
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 20
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 15
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 5
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 5
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 40
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 20
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 15
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 10
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(6)) * 5
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 50
+                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 20
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(7)) * 30000
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(6)) * 50
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 20
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 15
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 5
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(2)) * 5
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 40
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 20
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 15
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(2)) * 10
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(1)) * 5
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(0)) * 50;
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(0)) * 20;
 
     //keeps center control with the strong board.pieces
     int strongCenter = __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(0)) * 25
@@ -75,7 +90,7 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     int rabbitCenterAvoid = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(0)) * -10
                           + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(1)) * -5
                           + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(2)) * -3
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 10;
+                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 10
                           - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(0)) * -10
                           - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(1)) * -5
                           - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(2)) * -3
@@ -128,8 +143,7 @@ bool Eval :: isWin(Board& board, unsigned char color)
 //index referenced by the hashtable if there are any, if one does not
 //wish to provide one, it should be set to -1
 //////////////////////////////////////////////////////////////////////////////
-void Eval :: scoreCombos(StepCombo combos[], int num, 
-                        unsigned char color, int bestIndex)
+void Eval :: scoreCombos(StepCombo combos[], int num, unsigned char color)
 {
     for (int i = 0; i < num; ++i)
     {
@@ -142,23 +156,106 @@ void Eval :: scoreCombos(StepCombo combos[], int num,
 
         if (combos[i].hasFriendlyCapture)
         {
-            combos[i].score -= 50 * 
+            combos[i].score -= 1000 * 
                                (MAX_TYPES - combos[i].friendlyCaptureType);
         } 
         
         if (combos[i].hasEnemyCapture)
         {
-            combos[i].score += 50 * 
+            combos[i].score += 1000 * 
                                (MAX_TYPES - combos[i].enemyCaptureType);
         }
 
-        //give some score for killer moves
-        combos[i].score += killermove[combos[i].steps[0].getFrom()] 
-                                     [combos[i].steps[0].getTo()]
-                                     [color] * 10;
+        //give moves some score based on history heuristic
+        combos[i].score += getHistoryScore(combos[i].getFrom1(),
+                                                combos[i].getTo1(),
+                                                combos[i].getFrom2(),
+                                                color);
+
+        //give moves some score based on push/pulling moves
+        if (combos[i].stepCost > 1 && combos[i].getFrom1() != ILLEGAL_SQUARE)
+            combos[i].score += 250;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Get a list of killer moves to try for that ply
+//////////////////////////////////////////////////////////////////////////////
+vector<KillerMove>& Eval :: getKillerMoves(unsigned int ply)
+{
+    return killermoves[ply];
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Increases the killer score for the specified combo for causing cutoffs at
+//the specified depth
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: addKillerMove(StepCombo& combo, unsigned int ply)
+{
+    //Search if the entry is already present, and just add points to it
+    bool found = false;
+    int lowestScore = 1000000;
+    int lowestIndex = -1;
+    for (int i = 0; i < killermoves[ply].size(); i++)
+    {
+        if (killermoves[ply][i] == combo)
+        {
+            killermoves[ply][i].score += 1;
+            found = true;
+            break;
+        }
+
+        if (killermoves[ply][i].score < lowestScore)
+        {
+            lowestScore = killermoves[ply][i].score;
+            lowestIndex = i;
+        }
     }
 
-    //give some bonus to the purported best move
-    if (bestIndex != -1)
-        combos[bestIndex].score  += 10000;
+    //if it wasn't found, then add it. If the array is already full, then
+    //just remove the lowest one
+    if (!found)
+    {
+        if (killermoves[ply].size() < EVAL_KILLER_MOVES_PER_PLY)
+        {
+            KillerMove killer;
+            killer = combo;   
+            killer.score = 1;
+            killermoves[ply].push_back(killer);
+        }
+        else
+        {
+            killermoves[ply][lowestIndex] = combo;
+            killermoves[ply][lowestIndex].score = 1;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Increase the history score of a certain move that was best at a certain 
+//depth
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: increaseHistoryScore(unsigned char from1, unsigned char to1,
+                                  unsigned char from2, unsigned char color,
+                                  unsigned char depth)
+{
+    //Check if there would be a overflow over the maximum if the history
+    //score is increased for this node before adding to the score
+    if ((int)historyScore[from1][to1][from2][color] 
+        + (int)depth < 65535)
+    {
+        //Increase the score for this move depending on its depth
+        historyScore[from1][to1][from2][color] += depth;
+    }
+    else
+        historyScore[from1][to1][from2][color] = 65535;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Get the history score for a particular move and player
+//////////////////////////////////////////////////////////////////////////////
+unsigned char Eval :: getHistoryScore(unsigned char from1, unsigned char to1,
+             unsigned char from2, unsigned char color)
+{
+    return historyScore[from1][to1][from2][color];
 }
