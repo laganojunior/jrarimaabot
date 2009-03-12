@@ -156,15 +156,25 @@ void Eval :: scoreCombos(StepCombo combos[], int num, unsigned char color)
 
         if (combos[i].hasFriendlyCapture)
         {
-            combos[i].score -= 50 * 
+            combos[i].score -= 1000 * 
                                (MAX_TYPES - combos[i].friendlyCaptureType);
         } 
         
         if (combos[i].hasEnemyCapture)
         {
-            combos[i].score += 50 * 
+            combos[i].score += 1000 * 
                                (MAX_TYPES - combos[i].enemyCaptureType);
         }
+
+        //give moves some score based on history heuristic
+        combos[i].score += getHistoryScore(combos[i].getFrom1(),
+                                                combos[i].getTo1(),
+                                                combos[i].getFrom2(),
+                                                color);
+
+        //give moves some score based on push/pulling moves
+        if (combos[i].stepCost > 1 && combos[i].getFrom1() != ILLEGAL_SQUARE)
+            combos[i].score += 250;
     }
 }
 
@@ -219,4 +229,33 @@ void Eval :: addKillerMove(StepCombo& combo, unsigned int ply)
             killermoves[ply][lowestIndex].score = 1;
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Increase the history score of a certain move that was best at a certain 
+//depth
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: increaseHistoryScore(unsigned char from1, unsigned char to1,
+                                  unsigned char from2, unsigned char color,
+                                  unsigned char depth)
+{
+    //Check if there would be a overflow over the maximum if the history
+    //score is increased for this node before adding to the score
+    if ((int)historyScore[from1][to1][from2][color] 
+        + (int)depth < 65535)
+    {
+        //Increase the score for this move depending on its depth
+        historyScore[from1][to1][from2][color] += depth;
+    }
+    else
+        historyScore[from1][to1][from2][color] = 65535;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Get the history score for a particular move and player
+//////////////////////////////////////////////////////////////////////////////
+unsigned char Eval :: getHistoryScore(unsigned char from1, unsigned char to1,
+             unsigned char from2, unsigned char color)
+{
+    return historyScore[from1][to1][from2][color];
 }

@@ -70,6 +70,21 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     //start timing now
     time_t reftime = clock();
 
+    //set back history scores to avoid overflows if possible
+    for (int f1 = 0; f1 < NUM_SQUARES + 1; f1++)
+    {
+        for (int t1 = 0; t1 < NUM_SQUARES + 1; t1++)
+        {
+            for (int f2 = 0;  f2 < NUM_SQUARES + 1; f2++)
+            {
+                for (int c = 0; c < MAX_COLORS; c++)
+                {
+                    eval.historyScore[f1][t1][f2][c] >>=7;
+                }
+            }
+        }
+    }
+
     //Add this board to the search history
     addSearchHistory(board);
 
@@ -398,6 +413,12 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
                     //increase killer score
                     eval.addKillerMove(*next, ply);
+
+                    //increase the history score for this move
+                    eval.increaseHistoryScore((*next).getFrom1(),
+                          (*next).getTo1(), (*next).getFrom2(), 
+                          board.sideToMove,depth);
+
                     return beta;
                 }
             }
@@ -462,6 +483,12 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
                 //increase killer score
                 eval.addKillerMove(combos[ply][nextIndex], ply);
+
+                //increase the history score for this move
+                eval.increaseHistoryScore(combos[ply][nextIndex].getFrom1(),
+                      combos[ply][nextIndex].getTo1(), 
+                      combos[ply][nextIndex].getFrom2(), 
+                      board.sideToMove, depth);
                 return beta;
             }
         }
@@ -500,7 +527,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
     if (hasOccured(board))
     {
         board.undoCombo(combo);
-        return alpha;
+        return -30000;
     }
 
     //add this new board to the search history
@@ -533,7 +560,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
             board.unchangeTurn(oldnumsteps);
             removeSearchHistory(board);
             board.undoCombo(combo);
-            return alpha;
+            return -30000;
         }
 
         //Increment board state occurences
@@ -733,7 +760,7 @@ void Search :: loadMoveFile(string filename, Board board)
             {
                 lineStream >> word;
                 
-                if (lineStream.bad() || lineStream.eof())
+                if (lineStream.bad())
                 {
                     quit = 1;
                     okay = false;

@@ -74,6 +74,12 @@ class Eval
     vector<KillerMove>& getKillerMoves(unsigned int ply);
     void  addKillerMove(StepCombo& combo, unsigned int ply);        
 
+    void increaseHistoryScore(unsigned char from1, unsigned char to1,
+                              unsigned char from2, unsigned char color,
+                              unsigned char depth);
+    unsigned char getHistoryScore(unsigned char from1, unsigned char to1,
+                                  unsigned char from2, unsigned char color);
+	
     //array used to keep track of moves that tended to create cutoffs
     //at certain plys. Hopefully, the same moves will create cutoffs
     //at other nodes at similar depths
@@ -81,8 +87,8 @@ class Eval
 
     //array used to keep counts of when a certain move turned out to be
     //the best move for that player. It is indexed from1, to1, from2, color
-    unsigned char historyScore[NUM_SQUARES+1][NUM_SQUARES+1]
-                              [NUM_SQUARES+1][MAX_COLORS];
+    unsigned short historyScore[NUM_SQUARES+1][NUM_SQUARES+1]
+                               [NUM_SQUARES+1][MAX_COLORS];
 };
 
 #endif
