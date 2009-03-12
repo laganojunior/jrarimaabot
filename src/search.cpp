@@ -75,7 +75,7 @@ StepCombo Search :: searchRoot(Board& board, int depth)
 
     //combo that was the best one to try last time
     StepCombo lastBest;
-    bool lastBestFound = false;;
+    bool lastBestFound = false;
 
     //check if there is a hash position of at least this depth, but only
     //to get the best move from the hash.

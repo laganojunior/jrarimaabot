@@ -3,6 +3,21 @@
 #include "int64.h"
 
 //////////////////////////////////////////////////////////////////////////////
+//Clear all stored data from a previous search such as killer move data
+//and history score data
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: reset()
+{
+    //reset killer moves
+    for (int i = 0; i < SEARCH_MAX_DEPTH; i++)
+        killermoves[i].resize(0);
+
+    //reset history scores
+    memset(historyScore, 0, sizeof(unsigned char) * (NUM_SQUARES+1)
+                          * (NUM_SQUARES+1) * (NUM_SQUARES+1) * MAX_COLORS);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 //Returns a static evaluation score of the board in the
 //perspective of the player given
 //////////////////////////////////////////////////////////////////////////////

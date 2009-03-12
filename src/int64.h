@@ -6,11 +6,9 @@
 //integers, wheter they are bitboard representations, hashes, etc..
 //////////////////////////////////////////////////////////////////////////////
 
+#include "defines.h"
 #include <iostream>
 #include <string>
-
-//bitscanforward bit not found error
-#define NO_BIT_FOUND -1
 
 using namespace std;
 

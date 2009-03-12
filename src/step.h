@@ -2,9 +2,8 @@
 #define __JR_STEP_H__
 
 #include "piece.h"
+#include "defines.h"
 #include <string>
-
-#define MAX_STEPS_IN_COMBO 20
 
 using namespace std;
 

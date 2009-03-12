@@ -2,13 +2,8 @@
 #define __JR_HASH_H__
 
 //hash table data structures to keep data for transpositions
-#define SCORE_ENTRY_EXACT 0
-#define SCORE_ENTRY_UPPER 1
-#define SCORE_ENTRY_LOWER 2
 
-#define SCORE_MOVE_1STEP 1
-#define SCORE_MOVE_2STEP 2
-
+#include "defines.h"
 #include "int64.h"
 #include <assert.h>
 #include <string.h>

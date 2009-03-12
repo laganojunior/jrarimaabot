@@ -2,15 +2,12 @@
 #define __JR_EVAL_H__
 
 #include "board.h"
+#include "defines.h"
 #include "step.h"
 #include "hash.h"
 #include <vector>
 
 //functions and structures used for scoring heurisitics
-
-#define SEARCH_MAX_DEPTH 20
-
-#define EVAL_KILLER_MOVES_PER_PLY 2
 
 using namespace std;
 
@@ -67,8 +64,9 @@ class KillerMove
 class Eval
 {
     public:
+    void reset();
 
-    short evalBoard(Board& board, unsigned char color);
+    short evalBoard(Board& board, unsigned char color); 
     bool isWin(Board& board, unsigned char color);
 
     void scoreCombos(StepCombo combos[], int num, unsigned char color); 
@@ -82,7 +80,9 @@ class Eval
     vector<KillerMove> killermoves[SEARCH_MAX_DEPTH];
 
     //array used to keep counts of when a certain move turned out to be
-    //the best move for that ply
+    //the best move for that player. It is indexed from1, to1, from2, color
+    unsigned char historyScore[NUM_SQUARES+1][NUM_SQUARES+1]
+                              [NUM_SQUARES+1][MAX_COLORS];
 };
 
 #endif
