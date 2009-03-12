@@ -971,6 +971,9 @@ bool Board :: gen1Step(StepCombo& combo, unsigned char from, unsigned char to)
     //Check if there is a piece there on the current side to move
     unsigned char piece = getPieceAt(from);
 
+    if (from == ILLEGAL_SQUARE || to == ILLEGAL_SQUARE)
+        return false;
+
     if (piece == NO_PIECE || colorOfPiece(piece) != sideToMove)
         return false;
 
@@ -1011,6 +1014,10 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
     //Check if there are pieces on the two squares
     unsigned char piece1 = getPieceAt(from1);
     unsigned char piece2 = getPieceAt(from1);
+
+    if (from1 == ILLEGAL_SQUARE || to1 == ILLEGAL_SQUARE || 
+        from2 == ILLEGAL_SQUARE)
+        return false;
 
     if (piece1 == NO_PIECE || piece2 == NO_PIECE)
         return false;

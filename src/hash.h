@@ -20,9 +20,9 @@ using namespace std;
 //bit 3-18  : 16 bits to store a score
 //bit 19-23 : the depth this board was evaluated to
 //bit 24-25 : type of move stored
-//bit 26-31 : index for source square for first moving piece
-//bit 32-37 : index for destination square for first moving piece
-//bit 38-43 : index for source square for second moving piece, note that
+//bit 26-32 : index for source square for first moving piece
+//bit 33-39 : index for destination square for first moving piece
+//bit 40-46 : index for source square for second moving piece, note that
 //            the destination from the second piece must be the source square
 //            of the first piece
 class ScoreEntry
@@ -77,7 +77,7 @@ class ScoreEntry
     //////////////////////////////////////////////////////////////////////////
     unsigned char getFrom1()
     {
-        return (data >> 26) & 0x3F;
+        return (data >> 26) & 0x7F;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ class ScoreEntry
     //////////////////////////////////////////////////////////////////////////
     unsigned char getTo1()
     {
-        return (data >> 32) & 0x3F;
+        return (data >> 33) & 0x7F;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -94,7 +94,7 @@ class ScoreEntry
     //////////////////////////////////////////////////////////////////////////
     unsigned char getFrom2()
     {
-        return (data >> 38) & 0x3F;
+        return (data >> 40) & 0x7F;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -119,8 +119,8 @@ class ScoreEntry
              | (((Int64)depth & 0x1F) << 19)
              | (((Int64)moveType & 0x3) << 24)
              | (((Int64)from1 & 0x3F) << 26)
-             | (((Int64)to1 & 0x3F) << 32)
-             | (((Int64)from2 & 0x3F) << 38);
+             | (((Int64)to1 & 0x7F) << 33)
+             | (((Int64)from2 & 0x7F) << 40);
 
         this->hash = hash;
     }

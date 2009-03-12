@@ -26,7 +26,7 @@ class KillerMove
         {
             movetype = SCORE_MOVE_1STEP;
             from1 = combo.getFrom1();
-            to1 = combo.getFrom2();
+            to1 = combo.getTo1();
             return *this;
         }
         
