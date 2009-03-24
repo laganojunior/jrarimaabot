@@ -187,7 +187,7 @@ int main(int argc, char * args[])
 
                 for (hashBits = 0;
                      Int64FromIndex(hashBits) * 
-                     (sizeof(ScoreEntry)) < (Int64)50 * 1024 * 1024;
+                     (sizeof(ScoreEntry)) < (Int64)hashSize * 1024 * 1024;
                      hashBits++);
 
                 hashBits --;
@@ -239,11 +239,11 @@ int main(int argc, char * args[])
                  << "Behaves according to the arimaa gameroom specification\n\n";
             cout << "--depth max\nSets the max search depth. Defaults to 4\n\n";
             cout << "--hashtablesize num\nSets the size of the hash table in"
-                 << "MB. Defaults to 50\n\n";
+                 << " MB. Defaults to 50\n\n";
             cout << "--genmoves positionFile\nDisplays the set of moves that"
-                 << "the move generator generates from a position\n\n";
+                 << " the move generator generates from a position\n\n";
             cout << "--eval positionFile\nDisplays the static evaluation"
-                 << "score the evaluator returns from a position\n\n";
+                 << " score the evaluator returns from a position\n\n";
         }
 
             
