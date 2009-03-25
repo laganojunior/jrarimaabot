@@ -22,21 +22,17 @@ using namespace std;
 Search :: Search(int scoreHashBits)
 {
     //Initialize hash tables
-    scorehashes.init(Int64FromIndex(scoreHashBits));
+    transTable.setHashKeySize(scoreHashBits);
     gameHist.init(Int64FromIndex(SEARCH_GAME_HIST_HASH_BITS));
     searchHist.init(Int64FromIndex(SEARCH_SEARCH_HIST_HASH_BITS));
 
     //create hash masks
-    scoreHashMask = 0;
-
-    for (int i = 0; i < scoreHashBits; i++)
-        scoreHashMask |= Int64FromIndex(i);
-
     gameHistHashMask = 0;
 
     for (int i = 0; i < SEARCH_GAME_HIST_HASH_BITS; i++)
         gameHistHashMask |= Int64FromIndex(i);
 
+    searchHistHashMask = 0;
     for (int i = 0; i < SEARCH_SEARCH_HIST_HASH_BITS; i++)
         searchHistHashMask |= Int64FromIndex(i);
 }
@@ -93,21 +89,22 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     bool lastBestFound = false;
 
     //check if there is a hash position of at least this depth, but only
-    //to get the best move from the hash.
-    ScoreEntry thisEntry;   
-    
-    if (getScoreEntry(board,thisEntry))
+    //to get the best move from the hash.  
+    if (transTable.hasValidEntry(board.hash))
     {
-        if (thisEntry.getMoveType() == SCORE_MOVE_1STEP)
+        hashHits++;
+
+        TranspositionEntry entry = transTable.getEntry(board.hash); 
+        if (entry.getNumSteps() == 1)
         {
-            if (board.gen1Step(lastBest, thisEntry.getFrom1(),
-                              thisEntry.getTo1()))
+            if (board.gen1Step(lastBest, entry.getFrom1(),
+                              entry.getTo1()))
                 lastBestFound = true;
         }
-        else if (thisEntry.getMoveType() == SCORE_MOVE_2STEP)
+        else
         {
-            if (board.gen2Step(lastBest, thisEntry.getFrom1(),
-                              thisEntry.getTo1(), thisEntry.getFrom2()))
+            if (board.gen2Step(lastBest, entry.getFrom1(),
+                              entry.getTo1(), entry.getFrom2()))
                 lastBestFound = true;
         }
     }
@@ -161,7 +158,8 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     removeSearchHistory(board);
 
     //add a entry into the hash table for this node
-    addScoreEntry(board, SCORE_ENTRY_EXACT, score, depth, bestCombo);
+    transTable.setEntry(board.hash, TRANSPOSITION_SCORETYPE_EXACT, score, 
+                            depth, bestCombo.getRawMove());
 
     //stop timing now
     time_t stoptime = clock();
@@ -224,10 +222,10 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     vector<StepCombo> preGenSteps;
 
     //check if there is a hash position of at least this depth
-    ScoreEntry thisEntry;   
-    
-    if (getScoreEntry(board,thisEntry))
+    if (transTable.hasValidEntry(board.hash))
     {
+        TranspositionEntry thisEntry = transTable.getEntry(board.hash);  
+
         //adjust the bounds with the bounds in the hash entry, if the depth 
         //matches
 
@@ -265,16 +263,14 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
         //Get the move from the hash table, see if it can be played, and
         //play it now before generating all moves
-        if (thisEntry.getMoveType() == SCORE_MOVE_1STEP)
+        if (thisEntry.getNumSteps() == 1)
         {
             StepCombo hashBestCombo;
             if (board.gen1Step(hashBestCombo, thisEntry.getFrom1(),
                               thisEntry.getTo1()))
-            {
                 preGenSteps.push_back(hashBestCombo);
-            }
         }
-        else if (thisEntry.getMoveType() == SCORE_MOVE_2STEP)
+        else
         {
             StepCombo hashBestCombo;
             if (board.gen2Step(hashBestCombo, thisEntry.getFrom1(),
@@ -361,8 +357,9 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                 {   
                     //Store the hash for this position and note a beta
                     //cutoff, that is: note that beta is a lower bound
-                    addScoreEntry(board, SCORE_ENTRY_LOWER, beta, depth,
-                                  *next); 
+                    transTable.setEntry(board.hash, 
+                            TRANSPOSITION_SCORETYPE_LOWER, beta, depth,
+                            next->getRawMove());
 
                     //increase killer score
                     eval.addKillerMove(*next, ply);
@@ -431,8 +428,10 @@ short Search :: searchNode(Board& board, int depth, short alpha,
             {   
                 //Store the hash for this position and note a beta
                 //cutoff, that is: note that beta is a lower bound
-                addScoreEntry(board, SCORE_ENTRY_LOWER, beta, depth,
-                              combos[ply][nextIndex]); 
+                transTable.setEntry(board.hash, 
+                        TRANSPOSITION_SCORETYPE_LOWER, beta, depth,
+                        combos[ply][nextIndex].getRawMove());
+
 
                 //increase killer score
                 eval.addKillerMove(combos[ply][nextIndex], ply);
@@ -452,14 +451,14 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         //if alpha remains unchanged, then it might be that the true value
         //is actually under alpha, so alpha is a upperbound
 
-        addScoreEntry(board, SCORE_ENTRY_UPPER, alpha, depth,
-                      bestCombo);
+        transTable.setEntry(board.hash, TRANSPOSITION_SCORETYPE_UPPER, alpha, 
+                            depth, bestCombo.getRawMove());
     }   
     else
     {
         //alpha is actually an exact value of the score
-        addScoreEntry(board, SCORE_ENTRY_EXACT, alpha, depth,
-                      bestCombo);
+        transTable.setEntry(board.hash, TRANSPOSITION_SCORETYPE_EXACT, alpha, 
+                            depth, bestCombo.getRawMove());
     }
         
     return alpha;
@@ -553,63 +552,6 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
     }  
     
     return alpha;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//Attempts to write a entry into the score hash table. Only overwrite the 
-//current entry if the depth is at least as much as the one already in the
-//table
-//////////////////////////////////////////////////////////////////////////////
-void Search :: addScoreEntry(Board& board, unsigned char scoreType,
-                             short score, unsigned int depth, 
-                             StepCombo& bestCombo)
-{
-    ScoreEntry& entry = scorehashes.getEntry(board.hash & scoreHashMask);
-
-    if (!entry.isFilled() || entry.getDepth() <= depth)
-    {
-        //check for a collision
-        if (entry.isFilled() && entry.getHash() != board.hash)  
-        {
-            collisions++; 
-        }
-
-        //Check for a push, pull, or pass
-        unsigned char moveType;
-        if (bestCombo.stepCost >= 2)
-        {
-            moveType = SCORE_MOVE_2STEP;
-        }   
-        else
-        {
-            moveType = SCORE_MOVE_1STEP;
-        }
-
-        entry.set(true, scoreType, score, depth, moveType, 
-                  bestCombo.getFrom1(), 
-                  bestCombo.getTo1(), 
-                  bestCombo.getFrom2(), board.hash); 
-    }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//Attempts to get a board's entry from the score hash table. If the board's
-//entry is found in the hashtable, it is written in the given entry reference
-//and this function returns true. If not, false is returned
-//////////////////////////////////////////////////////////////////////////////
-bool Search :: getScoreEntry(Board& board, ScoreEntry& entry)
-{
-    //get the entry from the array
-    ScoreEntry thisEntry = scorehashes.getEntry(board.hash & scoreHashMask);
-    
-    //check if the complete hashes match
-    if (thisEntry.isFilled() && thisEntry.getHash() == board.hash)
-    {
-        entry = thisEntry;
-        return true;    
-    }
-
-    return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////

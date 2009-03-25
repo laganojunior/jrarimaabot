@@ -7,6 +7,7 @@
 #include "step.h"
 #include "hash.h"
 #include "eval.h"
+#include "transposition.h"
 #include <string>
 #include <vector>
 
@@ -32,10 +33,6 @@ class Search
     short doMoveAndSearch(Board& board, int depth, short alpha,  
                           short beta, vector<string>& nodePV,
                           StepCombo& combo);
-
-    void addScoreEntry(Board& board, unsigned char scoreType, short score,
-                       unsigned int depth, StepCombo& bestCombo);
-    bool getScoreEntry(Board& board, ScoreEntry& entry);
 
     void incrementGameHistory(Board& board);
     void decrementGameHistory(Board& board);
@@ -67,9 +64,7 @@ class Search
     vector<string> pv; //the principal variation
 
     //a hash table to keep transposition data.
-    HashTable<ScoreEntry> scorehashes;
-    Int64 scoreHashMask;
-    Int64 scoreExtraHashMask;
+    TranspositionTable transTable;
 
     //a hash table to keep data on which positions have occurred at the
     //beginning of turns, used to make sure positions aren't repeated 3 times

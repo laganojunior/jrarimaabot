@@ -148,7 +148,7 @@ int main(int argc, char * args[])
         //set hash bits low enough so that the hash table is at most 50 MB
         for (hashBits = 0;
              Int64FromIndex(hashBits) * 
-             (sizeof(ScoreEntry)) < (Int64)50 * 1024 * 1024;
+             (sizeof(TranspositionEntry)) < (Int64)50 * 1024 * 1024;
              hashBits++);
         hashBits --;
 
@@ -187,7 +187,8 @@ int main(int argc, char * args[])
 
                 for (hashBits = 0;
                      Int64FromIndex(hashBits) * 
-                     (sizeof(ScoreEntry)) < (Int64)hashSize * 1024 * 1024;
+                     (sizeof(TranspositionEntry)) < 
+                      (Int64)hashSize * 1024 * 1024;
                      hashBits++);
 
                 hashBits --;

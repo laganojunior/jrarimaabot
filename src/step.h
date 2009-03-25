@@ -3,6 +3,7 @@
 
 #include "piece.h"
 #include "defines.h"
+#include "rawmove.h"
 #include <string>
 
 using namespace std;
@@ -93,6 +94,8 @@ class StepCombo
     unsigned char getFrom1();
     unsigned char getTo1();
     unsigned char getFrom2();
+
+    RawMove getRawMove();
 
     void reset();
 

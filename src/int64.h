@@ -53,6 +53,21 @@ inline int bitScanForward(Int64 i)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+//Returns the 64 bit integer that has 1's for the lower section of bits
+//specified by numbits and 0's in all other bits
+//////////////////////////////////////////////////////////////////////////////
+inline Int64 Int64LowerBitsFilled(unsigned int numBits)
+{
+    Int64 i = 0;
+    for (int bit = 0; bit < numBits; bit++)
+    {
+        i |= ((Int64)1 << bit);
+    }
+
+    return i;
+}
+
+//////////////////////////////////////////////////////////////////////////////
 //returns the neighbors bitboard for the position index specified
 //////////////////////////////////////////////////////////////////////////////
 inline Int64 getNeighbors(unsigned int index)
