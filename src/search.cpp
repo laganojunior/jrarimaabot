@@ -117,33 +117,9 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     if (lastBestFound)
     {
         bestCombo = lastBest;
-        board.playCombo(lastBest);  
-
-        //Check if the position has already occured in the search history.
-        //This can happen in the root if the first move is a complete pass
-        if (!hasOccured(board))
-        {
-            //add this new board to the search history
-            addSearchHistory(board);
-
-            vector<string> nodePV;
-
-            short nodeScore = searchNode(board, 
-                                         depth - lastBest.stepCost, 
-                                         score, 30000, nodePV);
-
-            //remove the board from the history
-            removeSearchHistory(board);
-
-            if (nodeScore > score)
-            {
-                score = nodeScore;
-                pv.resize(0);
-                pv.insert(pv.begin(), lastBest.toString());
-                pv.insert(pv.begin()+1, nodePV.begin(), nodePV.end());
-            }
-        }
-        board.undoCombo(lastBest);
+        score = doMoveAndSearch(board, depth, -30000, 
+                                          30000, pv, 
+                                          lastBest);  
     }
 
     numCombos[0] = board.genMoves(combos[0]);
@@ -170,37 +146,14 @@ StepCombo Search :: searchRoot(Board& board, int depth)
         if (combos[0][nextIndex] == lastBest)
             continue;
 
-        board.playCombo(combos[0][nextIndex]);  
-
-        //Check if the position has already occured in the search history.
-        //This can happen in the root if the first move is a complete pass
-        if (hasOccured(board))
-        {
-            board.undoCombo(combos[0][nextIndex]);
-            continue;
-        }
-
-        //add this new board to the search history
-        addSearchHistory(board);
-
-        vector<string> nodePV;
-
-        short nodeScore = searchNode(board, 
-                                     depth - combos[0][nextIndex].stepCost, 
-                                     score, 30000, nodePV);
-
-        //remove the board from the history
-        removeSearchHistory(board);
-
-        board.undoCombo(combos[0][nextIndex]);
+        short nodeScore = doMoveAndSearch(board, depth, score, 
+                                          30000, pv, 
+                                          combos[0][nextIndex]); 
 
         if (nodeScore > score)
         {
             bestCombo = combos[0][nextIndex];
             score = nodeScore;
-            pv.resize(0);
-            pv.insert(pv.begin(), combos[0][nextIndex].toString());
-            pv.insert(pv.begin()+1, nodePV.begin(), nodePV.end());
         }
     }
 
@@ -952,4 +905,3 @@ string Search :: getShortStatString()
 
     return out.str();
 }
-
