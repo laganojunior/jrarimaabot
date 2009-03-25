@@ -337,12 +337,7 @@ void Board :: removePieceFromBoard(unsigned char index, unsigned char color,
 void Board :: playStep(Step step)
 {
     hash ^= hashStepsLeftParts[stepsLeft];
-    if (step.isPass())
-    {
-
-        --stepsLeft;
-    }
-    else if (step.isCapture())
+    if (step.isCapture())
     {
         //remove the piece from the board
         removePieceFromBoard(step.getFrom(),colorOfPiece(step.getPiece()),
@@ -367,11 +362,7 @@ void Board :: playStep(Step step)
 void Board :: undoStep(Step step)
 {
     hash ^= hashStepsLeftParts[stepsLeft];
-    if (step.isPass())
-    {
-        ++stepsLeft;
-    }
-    else if (step.isCapture())
+    if (step.isCapture())
     {
         //add the piece back to the board
         writePieceOnBoard(step.getFrom(),colorOfPiece(step.getPiece()),
@@ -968,13 +959,17 @@ bool Board :: gen1Step(StepCombo& combo, unsigned char from, unsigned char to)
     if (stepsLeft < 1)
         return false;
 
-    //Check if there is a piece there on the current side to move
-    unsigned char piece = getPieceAt(from);
-
     if (from == ILLEGAL_SQUARE || to == ILLEGAL_SQUARE)
         return false;
 
+    //Check if there is a piece there on the current side to move
+    unsigned char piece = getPieceAt(from);
+
     if (piece == NO_PIECE || colorOfPiece(piece) != sideToMove)
+        return false;
+
+    //Make sure the destination square is empty
+    if (getPieceAt(to) != NO_PIECE)
         return false;
 
     //Check if this piece is frozen
@@ -1011,15 +1006,19 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
     if (stepsLeft < 2)
         return false;
 
-    //Check if there are pieces on the two squares
-    unsigned char piece1 = getPieceAt(from1);
-    unsigned char piece2 = getPieceAt(from1);
-
     if (from1 == ILLEGAL_SQUARE || to1 == ILLEGAL_SQUARE || 
         from2 == ILLEGAL_SQUARE)
         return false;
 
+    //Check if there are pieces on the two squares
+    unsigned char piece1 = getPieceAt(from1);
+    unsigned char piece2 = getPieceAt(from2);
+
     if (piece1 == NO_PIECE || piece2 == NO_PIECE)
+        return false;
+
+    //Make sure the destination square is empty
+    if (getPieceAt(to1) != NO_PIECE)
         return false;
 
     combo.reset();
@@ -1027,7 +1026,7 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
     //Branch off wheter this is a push or pull
     if (colorOfPiece(piece1) == sideToMove)
     {
-        // first piece is from the player to move, this is a pulled
+        // first piece is from the player to move, this is a pull
 
         // check if the other piece is of the opponent and can be pulled.
         // Note that higher ranking pieces have lower numerical type values
@@ -1100,8 +1099,8 @@ bool Board :: moveLeadsToCapture(Step& step, Step& captureStep)
         }
 
         //move back the piece
-        removePieceFromBoard(to, sideToMove, typeOfPiece(piece));
-        writePieceOnBoard(from, sideToMove, typeOfPiece(piece));
+        removePieceFromBoard(to, color, typeOfPiece(piece));
+        writePieceOnBoard(from, color, typeOfPiece(piece));
     }
 
     return capture;

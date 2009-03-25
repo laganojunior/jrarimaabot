@@ -50,14 +50,6 @@ class Step
     }
 
     //////////////////////////////////////////////////////////////////////////
-    //returns true if and only if this is a pass
-    //////////////////////////////////////////////////////////////////////////
-    bool isPass()
-    {
-        return getPiece() == NO_PIECE;
-    }
-
-    //////////////////////////////////////////////////////////////////////////
     //sets this step to be a movement between two squares
     //////////////////////////////////////////////////////////////////////////
     void genMove(unsigned char piece,unsigned char from,unsigned char to)
@@ -71,15 +63,6 @@ class Step
     void genCapture(unsigned char piece,unsigned char at)
     {
         data = piece | (at << 4) | (at << 10);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    //sets this step to be a pass, which is done by setting the piece moving
-    //to no piece.
-    //////////////////////////////////////////////////////////////////////////
-    void genPass()
-    {
-        data = NO_PIECE | (1 << 4) | (2 << 10);
     }
 
     //all the data is packed into a 16-bit integer

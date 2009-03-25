@@ -128,8 +128,6 @@ void Step :: fromString(string str)
 //////////////////////////////////////////////////////////////////////////////
 string Step :: toString()
 {
-    if (isPass())
-        return "PASS";
 
     char moveType = '?'; //If this character remains unchanged, something is
                          //wrong
@@ -208,14 +206,6 @@ void StepCombo :: fromString(string s)
         if (stepStream.fail())
             break;
 
-        //passing move, which is really nothing, but the step cost must still
-        //be updated
-        if (word == string("PASS")) 
-        {
-            stepCost++;
-            continue;
-        }
-
         Step step;
         step.fromString(word);
         addStep(step);
@@ -263,10 +253,8 @@ void StepCombo :: addCombo(StepCombo& combo)
 //////////////////////////////////////////////////////////////////////////////
 unsigned char StepCombo :: getFrom1()
 {
-    if (steps[0].isPass())
-    {
+    if (stepCost < 1)
         return ILLEGAL_SQUARE;
-    }
 
     return steps[0].getFrom();
 }
@@ -277,10 +265,8 @@ unsigned char StepCombo :: getFrom1()
 //////////////////////////////////////////////////////////////////////////////
 unsigned char StepCombo :: getTo1()
 {
-    if (steps[0].isPass())
-    {
+    if (stepCost < 1)
         return ILLEGAL_SQUARE;
-    }
     
     return steps[0].getTo();
 }
@@ -293,9 +279,6 @@ unsigned char StepCombo :: getTo1()
 unsigned char StepCombo :: getFrom2()
 {
     if (stepCost < 2)
-        return ILLEGAL_SQUARE;
-
-    if (steps[0].isPass())
         return ILLEGAL_SQUARE;
 
     //note that second step can denote a capture, so the actual
