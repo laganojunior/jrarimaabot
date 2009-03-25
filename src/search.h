@@ -8,6 +8,7 @@
 #include "gamehist.h"
 #include "hash.h"
 #include "eval.h"
+#include "killer.h"
 #include "transposition.h"
 #include <string>
 #include <vector>
@@ -74,6 +75,9 @@ class Search
     //repeating positions
     HashTable<SearchHistEntry> searchHist;
     Int64 searchHistHashMask;
+
+    //Killer move table
+    KillerMoveTable killerTable;
 
     //keep pre-made arrays for storing moves at each ply, so that the
     //constructors/deconstructors aren't called so much

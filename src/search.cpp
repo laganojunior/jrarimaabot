@@ -279,7 +279,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
 
     //Get a list of killer moves to try
-    vector<KillerMove>& killer = eval.getKillerMoves(ply);
+    vector<RawMove> killer = killerTable.getKillerMoves(ply);
 
     //Check if the killer moves are available to play here, and add
     //them to the pre gen list
@@ -287,7 +287,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     {
         StepCombo killerCombo;
 
-        if (killer[i].movetype == SCORE_MOVE_1STEP)
+        if (killer[i].numSteps == 1)
         {
             if (board.gen1Step(killerCombo, killer[i].from1, killer[i].to1))
             {
@@ -307,7 +307,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                     preGenSteps.push_back(killerCombo);
             }
         }
-        else if (killer[i].movetype == SCORE_MOVE_2STEP)
+        else
         {
             if (board.gen2Step(killerCombo, killer[i].from1, killer[i].to1,
                                             killer[i].from2))
@@ -357,7 +357,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                             next->getRawMove());
 
                     //increase killer score
-                    eval.addKillerMove(*next, ply);
+                    killerTable.addKillerMove(ply, next->getRawMove());
 
                     //increase the history score for this move
                     eval.increaseHistoryScore((*next).getFrom1(),
@@ -429,7 +429,8 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
 
                 //increase killer score
-                eval.addKillerMove(combos[ply][nextIndex], ply);
+                killerTable.addKillerMove(ply, 
+                                        combos[ply][nextIndex].getRawMove());
 
                 //increase the history score for this move
                 eval.increaseHistoryScore(combos[ply][nextIndex].getFrom1(),
