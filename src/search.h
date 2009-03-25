@@ -5,6 +5,7 @@
 
 #include "board.h"
 #include "step.h"
+#include "gamehist.h"
 #include "hash.h"
 #include "eval.h"
 #include "transposition.h"
@@ -34,9 +35,6 @@ class Search
                           short beta, vector<string>& nodePV,
                           StepCombo& combo);
 
-    void incrementGameHistory(Board& board);
-    void decrementGameHistory(Board& board);
-    int  getGameHistoryOccurences(Board& board);
     void loadMoveFile(string filename, Board board);  
 
     void addSearchHistory(Board& board);
@@ -69,8 +67,7 @@ class Search
     //a hash table to keep data on which positions have occurred at the
     //beginning of turns, used to make sure positions aren't repeated 3 times
     //which is a loss.
-    HashTable<GameHistEntry> gameHist;
-    Int64 gameHistHashMask;
+    GameHistTable gameHistTable;
 
     //a hash table to keep data on which positions are in this search path
     //down the tree. This is used to eliminate moves that just lead to

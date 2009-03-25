@@ -11,24 +11,6 @@
 
 using namespace std;
 
-//Hash entry to see how many times a position occurred at the end of a turn
-//Used for enforcing 3-repeat rule
-class GameHistEntry
-{
-    public:
-    //////////////////////////////////////////////////////////////////////////
-    //Resets the entry to nothing.
-    //////////////////////////////////////////////////////////////////////////
-    void reset()
-    {
-        numOccur = 0;
-    }
-
-
-    char numOccur; // number of times this position has occurred
-    
-};
-
 //Hash entry to see if a position has already occurred down the current 
 //search path. Used to avoid repititions
 class SearchHistEntry
@@ -53,14 +35,11 @@ class HashTable
 {
     public:
 	//////////////////////////////////////////////////////////////////////////
-	//initializes the hashtable with the specified number of entries, and 
-	//zeroes out the entries
+	//initializes the hashtable with the specified number of entries
 	//////////////////////////////////////////////////////////////////////////
     void init(Int64 numEntries)
 	{
 		entries.resize(numEntries);
-        for (int i = 0; i < numEntries; i++)
-            entries[i].reset();
 	}
 
 	//////////////////////////////////////////////////////////////////////////

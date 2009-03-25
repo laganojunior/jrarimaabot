@@ -23,15 +23,10 @@ Search :: Search(int scoreHashBits)
 {
     //Initialize hash tables
     transTable.setHashKeySize(scoreHashBits);
-    gameHist.init(Int64FromIndex(SEARCH_GAME_HIST_HASH_BITS));
+    gameHistTable.setHashKeySize(10);
     searchHist.init(Int64FromIndex(SEARCH_SEARCH_HIST_HASH_BITS));
 
     //create hash masks
-    gameHistHashMask = 0;
-
-    for (int i = 0; i < SEARCH_GAME_HIST_HASH_BITS; i++)
-        gameHistHashMask |= Int64FromIndex(i);
-
     searchHistHashMask = 0;
     for (int i = 0; i < SEARCH_SEARCH_HIST_HASH_BITS; i++)
         searchHistHashMask |= Int64FromIndex(i);
@@ -507,7 +502,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
         //Check if state is now one that has occurred in the history
         //2 times before (making this the third). If it is, disallow the
         //move
-        if (getGameHistoryOccurences(board) >= 2)
+        if (gameHistTable.getNumOccur(board.hashPiecesOnly) >= 2)
         {   
             board.unchangeTurn(oldnumsteps);
             removeSearchHistory(board);
@@ -516,7 +511,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
         }
 
         //Increment board state occurences
-        incrementGameHistory(board);
+        gameHistTable.incrementOccur(board.hashPiecesOnly);
 
         //search through opponent's turn
         nodeScore = -searchNode(board, 
@@ -524,7 +519,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
                                 -beta, -alpha, thisPV);
 
         //Decrement board state occurences
-        decrementGameHistory(board);
+        gameHistTable.decrementOccur(board.hashPiecesOnly);
 
         //revert state back
         board.unchangeTurn(oldnumsteps);
@@ -552,38 +547,6 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
     }  
     
     return alpha;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//Increase the count in the game history for the given board position.
-//////////////////////////////////////////////////////////////////////////////
-void Search :: incrementGameHistory(Board& board)
-{
-    GameHistEntry& hist = gameHist.getEntry(board.hashPiecesOnly
-                                            & gameHistHashMask);
-    if (hist.numOccur < 127)
-        hist.numOccur++;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//Decrease the count in the game history for the given board position
-//////////////////////////////////////////////////////////////////////////////
-void Search :: decrementGameHistory(Board& board)
-{
-    GameHistEntry& hist = gameHist.getEntry(board.hashPiecesOnly 
-                                            & gameHistHashMask);
-    if (hist.numOccur > 0)
-        hist.numOccur--;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//returns the count in the game history for the given board position
-//////////////////////////////////////////////////////////////////////////////
-int  Search :: getGameHistoryOccurences(Board& board)
-{
-    GameHistEntry& hist = gameHist.getEntry(board.hashPiecesOnly
-                                            & gameHistHashMask);
-    return hist.numOccur;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -666,7 +629,7 @@ void Search :: loadMoveFile(string filename, Board board)
                 if (word == string("takeback"))
                 {
                     //remove an occurence of the current board to the history
-                    decrementGameHistory(board);
+                    gameHistTable.decrementOccur(board.hashPiecesOnly);
 
                     //pop the last board on the stack back onto the current
                     //state
@@ -707,7 +670,7 @@ void Search :: loadMoveFile(string filename, Board board)
             if (okay)
             {
                 //Add the current states to the history and the board stack
-                incrementGameHistory(board);
+                gameHistTable.incrementOccur(board.hashPiecesOnly);
                 boardHist.push_back(board);
             }
         }
@@ -723,7 +686,7 @@ void Search :: loadMoveFile(string filename, Board board)
             if (rest == string("takeback"))
             {
                 //remove an occurence of the current board to the history
-                decrementGameHistory(board);
+                gameHistTable.decrementOccur(board.hashPiecesOnly);
 
                 //pop the last board on the stack back onto the current
                 //state
@@ -744,7 +707,7 @@ void Search :: loadMoveFile(string filename, Board board)
             board.changeTurn();
         
             //Add the current states to the history and the board stack
-            incrementGameHistory(board);
+            gameHistTable.incrementOccur(board.hashPiecesOnly);
             boardHist.push_back(board);
         }
     }
