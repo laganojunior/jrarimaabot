@@ -14,11 +14,9 @@
 #include <vector>
 
 //some limiting constants
-#define SEARCH_MAX_DEPTH 20
 #define SEARCH_MAX_COMBOS_PER_PLY 120
 
 //hash bit constants
-#define SEARCH_GAME_HIST_HASH_BITS 20
 #define SEARCH_SEARCH_HIST_HASH_BITS 20
 
 using namespace std;
@@ -30,9 +28,9 @@ class Search
     ~Search();
 
     StepCombo searchRoot(Board& board, int depth);
-    short searchNode(Board& board, int depth, short alpha,  
+    short searchNode(Board& board, int depth, int ply, short alpha,  
                               short beta, vector<string>& nodePV);
-    short doMoveAndSearch(Board& board, int depth, short alpha,  
+    short doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                           short beta, vector<string>& nodePV,
                           StepCombo& combo);
 
@@ -42,7 +40,8 @@ class Search
     void removeSearchHistory(Board& board);
     bool  hasOccured(Board& board);
 
-    unsigned int getNextBestCombo(unsigned int ply);
+    StepCombo getNextBestComboAndRemove(vector<StepCombo>& list, 
+                                        unsigned int num);
 
     string getStatString();
     string getShortStatString();
@@ -79,10 +78,10 @@ class Search
     //Killer move table
     KillerMoveTable killerTable;
 
-    //keep pre-made arrays for storing moves at each ply, so that the
-    //constructors/deconstructors aren't called so much
-    StepCombo combos[SEARCH_MAX_DEPTH][SEARCH_MAX_COMBOS_PER_PLY];  
-    unsigned int numCombos[SEARCH_MAX_DEPTH];
+    //keep global arrays for move generation, so that the step combo 
+    //constructors are not called so much. The outer vector is indexed by
+    //ply. The inner vector keeps the combos for that ply
+    vector<vector<StepCombo> > combos;
 
     //Eval instance to score stuff
     Eval eval;

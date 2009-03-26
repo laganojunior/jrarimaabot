@@ -203,7 +203,8 @@ int main(int argc, char * args[])
                 positionFile = args[i+1];
                 board.loadPositionFile(positionFile);
 
-                StepCombo combos[120];
+                vector<StepCombo> combos;
+                combos.resize(SEARCH_MAX_COMBOS_PER_PLY);
                 int num = board.genMoves(combos);
                 cout << "Generated these moves:\n";
                 for (int i = 0; i < num; i++)

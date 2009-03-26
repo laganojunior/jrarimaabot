@@ -442,7 +442,7 @@ void Board :: unchangeTurn(unsigned int oldStepsLeft)
 //Note the array passed must be of large size, as this function cannot
 //and will not check if it passed the limit.
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genMoves(StepCombo combos[])
+unsigned int Board :: genMoves(vector<StepCombo>& combos)
 {
     if (stepsLeft < 1) //no steps left to move
         return 0;

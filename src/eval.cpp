@@ -139,7 +139,8 @@ bool Eval :: isWin(Board& board, unsigned char color)
 //index referenced by the hashtable if there are any, if one does not
 //wish to provide one, it should be set to -1
 //////////////////////////////////////////////////////////////////////////////
-void Eval :: scoreCombos(StepCombo combos[], int num, unsigned char color)
+void Eval :: scoreCombos(vector<StepCombo>& combos, int num, 
+                         unsigned char color)
 {
     for (int i = 0; i < num; ++i)
     {

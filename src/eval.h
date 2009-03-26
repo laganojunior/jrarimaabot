@@ -19,7 +19,7 @@ class Eval
     short evalBoard(Board& board, unsigned char color); 
     bool isWin(Board& board, unsigned char color);
 
-    void scoreCombos(StepCombo combos[], int num, unsigned char color);       
+    void scoreCombos(vector<StepCombo>& combos, int num, unsigned char color);       
 
     void increaseHistoryScore(unsigned char from1, unsigned char to1,
                               unsigned char from2, unsigned char color,

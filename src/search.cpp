@@ -109,14 +109,21 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     if (lastBestFound)
     {
         bestCombo = lastBest;
-        score = doMoveAndSearch(board, depth, -30000, 
+        score = doMoveAndSearch(board, depth, 0, -30000, 
                                           30000, pv, 
                                           lastBest);  
     }
 
-    numCombos[0] = board.genMoves(combos[0]);
+    //Check to make sure the combo arrays has entries up to this ply
+    if ((int)combos.size() < 1)
+    {
+        combos.resize(1);
+        combos[0].resize(SEARCH_MAX_COMBOS_PER_PLY);
+    }
+
+    unsigned int numCombos = board.genMoves(combos[0]);
         
-    if (numCombos[0] == 0 ) //no moves available? 
+    if (numCombos == 0 ) //no moves available? 
     {
         return StepCombo(); //give an empty step combo
     }
@@ -125,26 +132,26 @@ StepCombo Search :: searchRoot(Board& board, int depth)
         bestCombo = combos[0][0];
 
     //give the combos some score for move ordering
-    eval.scoreCombos(combos[0], numCombos[0], board.sideToMove);
+    eval.scoreCombos(combos[0], numCombos, board.sideToMove);
 
     //go through all remaining successors
-    for (int i = 0; i < numCombos[0]; ++i)
+    for (int i = 0; i < numCombos; ++i)
     {
         //get the next best combo to look at
-        unsigned int nextIndex = getNextBestCombo(0);
+        StepCombo next = getNextBestComboAndRemove(combos[0], numCombos);
 
         //check that this wasn't the last best successor, which was already
         //searched
-        if (combos[0][nextIndex] == lastBest)
+        if (next == lastBest)
             continue;
 
-        short nodeScore = doMoveAndSearch(board, depth, score, 
+        short nodeScore = doMoveAndSearch(board, depth, 0,  score, 
                                           30000, pv, 
-                                          combos[0][nextIndex]); 
+                                          next); 
 
         if (nodeScore > score)
         {
-            bestCombo = combos[0][nextIndex];
+            bestCombo = next;
             score = nodeScore;
         }
     }
@@ -188,13 +195,9 @@ StepCombo Search :: searchRoot(Board& board, int depth)
 //node to nodePV. The refer board is the state of the board at the beginning
 //of the turn, so don't go down paths that repeat that state
 //////////////////////////////////////////////////////////////////////////////
-short Search :: searchNode(Board& board, int depth, short alpha, 
+short Search :: searchNode(Board& board, int depth, int ply, short alpha, 
                            short beta, vector<string>& nodePV)
 {   
-    //set a variable to measure the ply, which should increase the farther
-    //the search is into the tree.
-    unsigned int ply = maxDepth - depth;
-
 
     ++numTotalNodes; //count the node as explored
 
@@ -203,14 +206,20 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     {
         ++numTerminalNodes; //node is terminal
 
-        return 30000; //return positive infinity.
+        return beta; //return positive infinity.
     }
 
     if (depth <= 0) //terminal node due to depth
     {
         ++numTerminalNodes; //this node is terminal
+        short thisScore = eval.evalBoard(board, board.sideToMove);
+        if (thisScore < alpha)  
+            return alpha;
+        
+        if (thisScore > beta)
+            return beta;
 
-        return eval.evalBoard(board, board.sideToMove);
+        return thisScore;
     }
 
     //list of moves to try before generating all the moves
@@ -227,22 +236,26 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         //exact bounds
         if (depth <= thisEntry.getDepth())
         {
+            short cutScore;
             if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
             {       
                 alpha = thisEntry.getScore();
-                beta = thisEntry.getScore();
+                beta = alpha;
+                cutScore = alpha;
             }
 
             //upper bound adjust
             if (thisEntry.getScoreType() == SCORE_ENTRY_UPPER)
             {
                 beta = thisEntry.getScore();
+                cutScore = alpha;
             }
 
             //lower bound adjust
             if (thisEntry.getScoreType() == SCORE_ENTRY_LOWER)
             {
                 alpha = thisEntry.getScore();
+                cutScore = beta;
             }
 
             //check if the adjustments made a cutoff
@@ -252,7 +265,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                 nodePV[0] = "<HT>";
                 hashHits++;
                 ++numTerminalNodes;
-                return beta;
+                return cutScore;
             }
         }
 
@@ -330,23 +343,21 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         }
     }
 
-    
     //if there are any pre-gen steps, explore them first
     if (preGenSteps.size() > 0) 
     {
         bestCombo = preGenSteps[0];
 
-        for (vector<StepCombo>::iterator next = preGenSteps.begin();
-             next != preGenSteps.end();
-             next++)
+        for (int i = 0; i < preGenSteps.size(); i++)
         {
-            
-            short nodeScore = doMoveAndSearch(board, depth, alpha, 
-                                              beta, nodePV, *next); 
+            StepCombo next = preGenSteps[i];
+
+            short nodeScore = doMoveAndSearch(board, depth, ply, alpha, 
+                                              beta, nodePV, next); 
 
             if (nodeScore > alpha) 
             {   
-                bestCombo = *next;
+                bestCombo = next;
                 alpha = nodeScore;
                 if (nodeScore >= beta) //beta cutoff
                 {   
@@ -354,14 +365,14 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                     //cutoff, that is: note that beta is a lower bound
                     transTable.setEntry(board.hash, 
                             TRANSPOSITION_SCORETYPE_LOWER, beta, depth,
-                            next->getRawMove());
+                            next.getRawMove());
 
                     //increase killer score
-                    killerTable.addKillerMove(ply, next->getRawMove());
+                    killerTable.addKillerMove(ply, next.getRawMove());
 
                     //increase the history score for this move
-                    eval.increaseHistoryScore((*next).getFrom1(),
-                          (*next).getTo1(), (*next).getFrom2(), 
+                    eval.increaseHistoryScore(next.getFrom1(),
+                          next.getTo1(), next.getFrom2(), 
                           board.sideToMove,depth);
 
                     return beta;
@@ -370,14 +381,25 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         }       
     }
 
+    //Check to make sure the combo arrays has entries up to this ply
+    if ((int)combos.size() - 1 < (int)ply)
+    {
+        while (combos.size() != ply + 1)
+        {
+            vector<StepCombo> vec;
+            combos.push_back(vec);
+            combos[combos.size() - 1].resize(SEARCH_MAX_COMBOS_PER_PLY);
+        }
+    }
+
     //If no cutoff was caused by the pre generation steps, generate the
     //remaining list of moves to explore
-    numCombos[ply] = board.genMoves(combos[ply]);
+    unsigned int numCombos = board.genMoves(combos[ply]);
         
-    if (numCombos[ply] == 0 ) 
+    if (numCombos == 0 ) 
     {
         //loss by immobility 
-        return -30000;
+        return alpha;
     }
 
     //if there were no pre gen steps, set the first best move now
@@ -387,20 +409,20 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     }
 
     //score the combos for sorting
-    eval.scoreCombos(combos[ply], numCombos[ply], board.sideToMove); 
+    eval.scoreCombos(combos[ply], numCombos, board.sideToMove); 
 
     //play each step, and explore each subtree
-    for (int i = 0; i < numCombos[ply]; i++)
+    for (int i = 0; i < numCombos; i++)
     {
         //get the next combo to look at.
-        unsigned int nextIndex = getNextBestCombo(ply);
+        StepCombo next = getNextBestComboAndRemove(combos[ply], numCombos);
 
         //Check if this combo is in the pre gen list, if so, just don't
         //research it
         bool redo = false;
         for (int j = 0; j < preGenSteps.size(); j++)
         {
-            if (combos[ply][nextIndex] == preGenSteps[j])
+            if (next == preGenSteps[j])
             {
                 redo = true;
                 break;
@@ -412,12 +434,12 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 
         //explore the subtree for this move.
 
-        short nodeScore = doMoveAndSearch(board, depth, alpha, beta, nodePV, 
-                                          combos[ply][nextIndex]); 
+        short nodeScore = doMoveAndSearch(board, depth, ply, alpha, beta, 
+                                          nodePV, next); 
             
         if (nodeScore > alpha) 
         {   
-            bestCombo = combos[ply][nextIndex];
+            bestCombo = next;
             alpha = nodeScore;
             if (nodeScore >= beta) //beta cutoff
             {   
@@ -425,18 +447,15 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                 //cutoff, that is: note that beta is a lower bound
                 transTable.setEntry(board.hash, 
                         TRANSPOSITION_SCORETYPE_LOWER, beta, depth,
-                        combos[ply][nextIndex].getRawMove());
+                        next.getRawMove());
 
 
                 //increase killer score
-                killerTable.addKillerMove(ply, 
-                                        combos[ply][nextIndex].getRawMove());
+                killerTable.addKillerMove(ply, next.getRawMove());
 
                 //increase the history score for this move
-                eval.increaseHistoryScore(combos[ply][nextIndex].getFrom1(),
-                      combos[ply][nextIndex].getTo1(), 
-                      combos[ply][nextIndex].getFrom2(), 
-                      board.sideToMove, depth);
+                eval.increaseHistoryScore(next.getFrom1(), next.getTo1(), 
+                                next.getFrom2(), board.sideToMove, depth);
                 return beta;
             }
         }
@@ -464,7 +483,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
 //Play a move on this board, and searches the resulting child node. returns
 //the updated alpha score.
 //////////////////////////////////////////////////////////////////////////////
-short Search :: doMoveAndSearch(Board& board, int depth, short alpha,  
+short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                                 short beta, vector<string>& nodePV,
                                 StepCombo& combo)
 {
@@ -475,7 +494,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
     if (hasOccured(board))
     {
         board.undoCombo(combo);
-        return -30000;
+        return alpha;
     }
 
     //add this new board to the search history
@@ -489,7 +508,8 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
     {
         //steps remaining, keep searching within this player's turn
         nodeScore = searchNode(board, 
-                               depth - combo.stepCost, 
+                               depth - combo.stepCost,
+                               ply + combo.stepCost,
                                alpha, beta, thisPV);
     }
     else
@@ -508,7 +528,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
             board.unchangeTurn(oldnumsteps);
             removeSearchHistory(board);
             board.undoCombo(combo);
-            return -30000;
+            return alpha;
         }
 
         //Increment board state occurences
@@ -517,6 +537,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
         //search through opponent's turn
         nodeScore = -searchNode(board, 
                                 depth - combo.stepCost,
+                                ply + combo.stepCost,
                                 -beta, -alpha, thisPV);
 
         //Decrement board state occurences
@@ -746,30 +767,31 @@ bool Search :: hasOccured(Board& board)
         
 
 //////////////////////////////////////////////////////////////////////////////
-//Gets the index of next best combo from the combos array at the given ply 
+//Returns the next best combo from the list
 //according to the scores for each one and sets the score for that one 
 //sufficiently low to remove it from consideration next time this is called
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Search :: getNextBestCombo(unsigned int ply)
+StepCombo Search :: getNextBestComboAndRemove(vector<StepCombo>& list, 
+                                              unsigned int num)
 {
-    short bestScore = combos[ply][0].score;   
+    short bestScore = list[0].score;   
     unsigned int bestIndex = 0;
 
     //search for the best score
-    for (int i = 1; i < numCombos[ply]; ++i)
+    for (int i = 1; i < num; ++i)
     {
-        if (combos[ply][i].score > bestScore)
+        if (list[i].score > bestScore)
         {
-            bestScore = combos[ply][i].score;
+            bestScore = list[i].score;
             bestIndex = i;
         }
     }
 
     //remove this combo from future consideration by setting its score
     //very low
-    combos[ply][bestIndex].score = -30000;
+    list[bestIndex].score = -30000;
     
-    return bestIndex;
+    return list[bestIndex];
 }
 
 //////////////////////////////////////////////////////////////////////////////
