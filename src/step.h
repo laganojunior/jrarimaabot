@@ -98,6 +98,9 @@ class StepCombo
 
     bool operator==(StepCombo& comp)
     {
+        if (numSteps != comp.numSteps)
+            return false;
+
         for (int i = 0; i < numSteps; i++)
         {
             if (comp.steps[i].data != steps[i].data)
@@ -106,6 +109,18 @@ class StepCombo
         
         return true;
     }     
+
+    StepCombo& operator=(const StepCombo& comp)
+    {
+        numSteps = comp.numSteps;
+        stepCost = comp.stepCost;
+        for (int i = 0; i < numSteps; i++)
+        {
+            steps[i].data = comp.steps[i].data;
+        }
+
+        return *this;
+    }
     
     Step steps[MAX_STEPS_IN_COMBO]; //the set of steps in this combo. 
                                     //the number was purposefully chosen to
