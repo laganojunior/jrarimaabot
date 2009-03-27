@@ -210,14 +210,21 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     {
         ++numTerminalNodes; //node is terminal
 
-        return 30000; //return positive infinity.
+        return beta; //return positive infinity.
     }
 
     if (depth <= 0) //terminal node due to depth
     {
         ++numTerminalNodes; //this node is terminal
 
-        return eval.evalBoard(board, board.sideToMove);
+        short thisScore = eval.evalBoard(board, board.sideToMove);
+        if (thisScore < alpha)  
+            return alpha;
+        
+        if (thisScore > beta)
+            return beta;
+
+        return thisScore;
     }
 
     //list of moves to try before generating all the moves
@@ -234,22 +241,26 @@ short Search :: searchNode(Board& board, int depth, short alpha,
         //exact bounds
         if (depth <= thisEntry.getDepth())
         {
+            short cutScore;
             if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
             {       
                 alpha = thisEntry.getScore();
-                beta = thisEntry.getScore();
+                beta = alpha;
+                cutScore = alpha;
             }
 
             //upper bound adjust
             if (thisEntry.getScoreType() == SCORE_ENTRY_UPPER)
             {
                 beta = thisEntry.getScore();
+                cutScore = alpha;
             }
 
             //lower bound adjust
             if (thisEntry.getScoreType() == SCORE_ENTRY_LOWER)
             {
                 alpha = thisEntry.getScore();
+                cutScore = beta;
             }
 
             //check if the adjustments made a cutoff
@@ -259,7 +270,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
                 nodePV[0] = "<HT>";
                 hashHits++;
                 ++numTerminalNodes;
-                return beta;
+                return cutScore;
             }
         }
 
@@ -385,7 +396,7 @@ short Search :: searchNode(Board& board, int depth, short alpha,
     if (numCombos[ply] == 0 ) 
     {
         //loss by immobility 
-        return -30000;
+        return alpha;
     }
 
     //if there were no pre gen steps, set the first best move now
@@ -480,7 +491,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
     if (hasOccured(board))
     {
         board.undoCombo(combo);
-        return -30000;
+        return alpha;
     }
 
     //add this new board to the search history
@@ -513,7 +524,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, short alpha,
             board.unchangeTurn(oldnumsteps);
             removeSearchHistory(board);
             board.undoCombo(combo);
-            return -30000;
+            return alpha;
         }
 
         //Increment board state occurences
