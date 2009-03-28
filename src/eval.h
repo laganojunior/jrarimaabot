@@ -14,6 +14,10 @@ using namespace std;
 class Eval
 {
     public:
+    Eval()
+    {
+        reset();
+    }
     void reset();
 
     short evalBoard(Board& board, unsigned char color); 
@@ -24,7 +28,7 @@ class Eval
     void increaseHistoryScore(unsigned char from1, unsigned char to1,
                               unsigned char from2, unsigned char color,
                               unsigned char depth);
-    unsigned char getHistoryScore(unsigned char from1, unsigned char to1,
+    unsigned short getHistoryScore(unsigned char from1, unsigned char to1,
                                   unsigned char from2, unsigned char color);
 
     //array used to keep counts of when a certain move turned out to be

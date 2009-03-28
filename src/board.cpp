@@ -459,10 +459,10 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
 
     //some arrays that keep the pre-calculated data on moving leading to
     //captures. indexed by the square moving from.
-    bool canKillItself[64];            //wheter a piece moving to a trap
+    unsigned char canKillItself[64];   //wheter a piece moving to a trap
                                        //would kill itself
 
-    bool leadsToCapture[64];           //wheter a piece moving would lead
+    unsigned char leadsToCapture[64];  //wheter a piece moving would lead
                                        //to a capture of another piece
 
     unsigned char pieceCaptured[64];   //what the other piece captured is
@@ -668,6 +668,8 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                 }
                 else
                     combos[numCombos].hasFriendlyCapture = false;
+
+                combos[numCombos].hasEnemyCapture = false;
                 
                 StepCombo prefix = combos[numCombos]; //keep this combo 
                                                       //to prefix pulls.
@@ -939,7 +941,9 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                                              typeOfPiece(pieceCaptured[from]);   
             }
             else
-                combos[numCombos].hasFriendlyCapture = false;                
+                combos[numCombos].hasFriendlyCapture = false; 
+
+            combos[numCombos].hasEnemyCapture = false;               
 
             ++numCombos;
         }
@@ -974,10 +978,6 @@ bool Board :: gen1Step(StepCombo& combo, unsigned char from, unsigned char to)
 
     //Check if this piece is frozen
     if (isFrozen(from, piece))
-        return false;
-
-    //Check if the destination square is occupied
-    if (getAllPieces() & Int64FromIndex(to))
         return false;
 
     //At this point, it should be a legal move, so generate it
@@ -1021,12 +1021,14 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
     if (getPieceAt(to1) != NO_PIECE)
         return false;
 
-    combo.reset();
-
     //Branch off wheter this is a push or pull
     if (colorOfPiece(piece1) == sideToMove)
     {
         // first piece is from the player to move, this is a pull
+
+        // Make sure first piece isn't frozen
+        if (isFrozen(from1, piece1))
+            return false;
 
         // check if the other piece is of the opponent and can be pulled.
         // Note that higher ranking pieces have lower numerical type values
@@ -1038,6 +1040,10 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
     {
         // this is a push
 
+        // make sure the second piece (the pushing piece) isn't frozen
+        if (isFrozen(from2, piece2))
+            return false;
+
         // check if the other piece is of the side to move and can push
         // the first piece
         // Note that higher ranking pieces have lower numerical type values
@@ -1046,6 +1052,7 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
             return false;
     }   
 
+    combo.reset();
 
     // Generate the pushing move, and check if that leads to any captures
     Step step, captureStep;
@@ -1055,12 +1062,20 @@ bool Board :: gen2Step(StepCombo& combo, unsigned char from1,
     if (moveLeadsToCapture(step, captureStep))
         combo.addStep(captureStep);
 
+    // Temporarily make the first move, in order to make checking for 
+    // captures in the second move easier
+    StepCombo prefix = combo;
+    playCombo(prefix);
+
     // Generate the step to finish the pull, and check for captures
     step.genMove(piece2, from2, from1);
     combo.addStep(step);
 
     if (moveLeadsToCapture(step, captureStep))
         combo.addStep(captureStep); 
+
+    // Unplay the first moves
+    undoCombo(prefix);
 
     return true;
 }

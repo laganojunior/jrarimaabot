@@ -139,7 +139,7 @@ int main(int argc, char * args[])
     {    
         //initialize the 64 bit arrays
         initInt64();
-        srand(time(0));
+        srand(0);
 
         int mode = MODE_HELP;
         int maxDepth = 4;

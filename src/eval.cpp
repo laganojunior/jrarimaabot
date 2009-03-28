@@ -9,7 +9,7 @@
 void Eval :: reset()
 {
     //reset history scores
-    memset(historyScore, 0, sizeof(unsigned char) * (NUM_SQUARES+1)
+    memset(historyScore, 0, sizeof(unsigned short) * (NUM_SQUARES+1)
                           * (NUM_SQUARES+1) * (NUM_SQUARES+1) * MAX_COLORS);
 }
 
@@ -135,9 +135,7 @@ bool Eval :: isWin(Board& board, unsigned char color)
 
 //////////////////////////////////////////////////////////////////////////////
 //gives the combo in the array some heurisitic scores to see which order the
-//moves should be considered in. The bestIndex variable should be set to the
-//index referenced by the hashtable if there are any, if one does not
-//wish to provide one, it should be set to -1
+//moves should be considered in.
 //////////////////////////////////////////////////////////////////////////////
 void Eval :: scoreCombos(vector<StepCombo>& combos, int num, 
                          unsigned char color)
@@ -198,7 +196,7 @@ void Eval :: increaseHistoryScore(unsigned char from1, unsigned char to1,
 //////////////////////////////////////////////////////////////////////////////
 //Get the history score for a particular move and player
 //////////////////////////////////////////////////////////////////////////////
-unsigned char Eval :: getHistoryScore(unsigned char from1, unsigned char to1,
+unsigned short Eval :: getHistoryScore(unsigned char from1, unsigned char to1,
              unsigned char from2, unsigned char color)
 {
     return historyScore[from1][to1][from2][color];
