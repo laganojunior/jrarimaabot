@@ -93,3 +93,11 @@ void KillerMoveTable :: resetKillerMoves(unsigned int ply)
 {
     killers[ply].resize(0);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//Resets the list of killer moves for every ply to be empty
+//////////////////////////////////////////////////////////////////////////////
+void KillerMoveTable :: reset()
+{
+    killers.resize(0);
+}

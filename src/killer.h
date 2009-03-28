@@ -26,6 +26,7 @@ class KillerMoveTable
     void addKillerMove(unsigned int ply, RawMove killer);
     vector<RawMove> getKillerMoves(unsigned int ply);
     void resetKillerMoves(unsigned int ply);
+    void reset();
         
     private:
     //a two dimension array to keep the killer moves. The outer vector

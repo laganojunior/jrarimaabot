@@ -37,30 +37,8 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
             << "Move file " << moveFile << endl
             << "Gamestate file " << gamestateFile << endl; 
 
-    //create the random hash parts
-    Int64 pieceParts[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
-    Int64 turnParts[MAX_COLORS];
-    Int64 stepsLeftParts[5];
-	for (int color = 0; color < MAX_COLORS; color++)
-	{
-		for (int type = 0; type < MAX_TYPES; type++)
-		{
-			for (int square = 0; square < NUM_SQUARES; square++)
-			{
-				pieceParts[color][type][square] = randInt64();
-			}
-		}
-		
-		turnParts[color] = randInt64();
-	}
-
-    for (int i = 0; i < 5; i++)
-    {
-        stepsLeftParts[i] = randInt64();
-    }
-
     Board board;
-    board.setHashes(pieceParts, turnParts, stepsLeftParts);
+    board.genRandomHashes();
     board.loadPositionFile(positionFile);
 
     logFile << "Loaded file. Board state is:\n";
@@ -83,48 +61,13 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
     else //otherwise actually go through a search
     {
         
-        unsigned int numNodes = 0;
-        short score;
-        StepCombo pv;
         Search search(hashBits);
         search.loadMoveFile(moveFile, board);
         
-        StepCombo bestMove;
-
-        unsigned int totalMillis = 0;
-        unsigned int totalHashHits = 0;
-        unsigned int totalHashOverwrites = 0;
-        Int64 totalNodes = 0;
-        //do search iteratively through depth to pump up hash tables and
-        //hopefully save nodes for larger depth searches.
-        logFile << setw(6) << "Depth" << setw(6) << "Score" << setw(11)
-                << "Nodes" << setw(10) << "Time(ms)" << " PV" << endl;
-
-        for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
-        {
-            bestMove = search.searchRoot(board, currDepth);
-            
-            logFile << search.getShortStatString() << endl;
-            //cerr << search.getShortStatString() << endl;
-
-            totalMillis += search.millis;
-            totalHashHits += search.hashHits;
-            totalHashOverwrites += search.collisions;
-            totalNodes += search.numTotalNodes;
-
-            //If the score is so great, then it's probably a win, so don't
-            //search any further
-            if (search.score >= 25000)
-                break;
-        }
-
+        StepCombo bestMove = search.iterativeDeepen(board, maxDepth, logFile);
+                                                    
         logFile << "Finished Search\n";
-        logFile << "Total nodes: " << totalNodes << endl;
-        logFile << "Total Time: " << totalMillis + 1 << "ms\n";
-        logFile << "Hash Table Hits: " << totalHashHits << endl;
-        logFile << "Hash Colliding Overwrites: "<< totalHashOverwrites<< endl;       
-        logFile << "Avg Nodes/Sec: "<< totalNodes * 1000/ (totalMillis+1) << endl;
-        logFile << "Playing Move " << bestMove.toString() << endl;
+        logFile << "Doing move " << bestMove.toString() << endl;
         cout << bestMove.toString() << endl;
     }
 }

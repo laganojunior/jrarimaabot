@@ -27,7 +27,8 @@ class Search
     Search(int numScoreHashBits);
     ~Search();
 
-    StepCombo searchRoot(Board& board, int depth);
+    StepCombo iterativeDeepen(Board& board, int maxDepth, ostream& log);
+    void searchRoot(Board& board, int depth);
     short searchNode(Board& board, int depth, int ply, short alpha,  
                               short beta, vector<string>& nodePV);
     short doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
@@ -43,19 +44,12 @@ class Search
     StepCombo getNextBestComboAndRemove(vector<StepCombo>& list, 
                                         unsigned int num);
 
-    string getStatString();
-    string getShortStatString();
-
     unsigned int numTerminalNodes; //number of terminal nodes explored
     unsigned int numTotalNodes;    //number of all nodes explored
-    unsigned int millis;           //milliseconds taken to do the search
     unsigned int totalNodesPerSec; //rate at which nodes are explored per 
                                    //second
-    unsigned int maxDepth; //depth the search was performed to
     unsigned int hashHits; //number of hits on the hash table for scoring
                            //purposes
-    unsigned int collisions; //number of times different positions were 
-                             //detected to have the same hash for scores
     short score;  //the solved (in respect to the game tree) of the current
                   //position
 

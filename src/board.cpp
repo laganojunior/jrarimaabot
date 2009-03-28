@@ -165,16 +165,28 @@ void Board :: loadPositionFile(string filename)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Sets the hash parts for use in creating hashes. Note this should be called
-//before the board is set in any way for hashes to be consistent
+//Sets the hash parts to new random values
 //////////////////////////////////////////////////////////////////////////////
-void Board :: setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
-                        Int64 turnParts[], Int64 stepsLeftParts[])
+void Board :: genRandomHashes()
 {
-    memcpy(hashPieceParts,pieceParts,sizeof(Int64) * MAX_COLORS * MAX_TYPES
-                                                   * NUM_SQUARES);
-    memcpy(hashTurnParts, turnParts, sizeof(Int64) * MAX_COLORS);
-    memcpy(hashStepsLeftParts, stepsLeftParts, sizeof (Int64) * 5);
+    //create the random hash parts
+	for (int color = 0; color < MAX_COLORS; color++)
+	{
+		for (int type = 0; type < MAX_TYPES; type++)
+		{
+			for (int square = 0; square < NUM_SQUARES; square++)
+			{
+				hashPieceParts[color][type][square] = randInt64();
+			}
+		}
+		
+		hashTurnParts[color] = randInt64();
+	}
+
+    for (int i = 0; i < 5; i++)
+    {
+        hashStepsLeftParts[i] = randInt64();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////

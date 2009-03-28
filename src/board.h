@@ -23,8 +23,7 @@ class Board
     void reset();
 
     void loadPositionFile(string filename);
-    void setHashes(Int64 pieceParts[][MAX_TYPES][NUM_SQUARES], 
-                   Int64 turnParts[], Int64 stepsLeftParts[]);
+    void genRandomHashes();
 
     bool isFrozen(unsigned char index, unsigned char piece);
     bool hasFriends(unsigned char index, unsigned char piece);

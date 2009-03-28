@@ -41,26 +41,73 @@ Search :: ~Search()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Resets all relevant search stats and starts a search on the given board
-//as the root node to the given depth using a search and returns
-//the best combo for the player to move.
+//Resets all relevant search stats and does an iterative deepening search
+//and returns the best move
 //////////////////////////////////////////////////////////////////////////////
-StepCombo Search :: searchRoot(Board& board, int depth)
+StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 {
     //reset search statistics
     numTerminalNodes = 0;
     numTotalNodes = 0;
-    millis = 0;
-    totalNodesPerSec = 0;
     score = -30000;
-    pv.resize(1);
-    maxDepth = depth;
+    pv.resize(0);
     hashHits = 0;
-    collisions = 0;
+    
+    eval.reset();
+    killerTable.reset();
 
+    log << setw(6) << "Depth" << setw(6) << "Score" << setw(15) 
+        << "Nodes" << setw(10) << "Time(ms)" << setw(10)
+        << "Nodes/Sec" << " PV\n";
     //start timing now
     time_t reftime = clock();
 
+    for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
+    {
+        searchRoot(board, currDepth);
+        
+        Int64 currMillis = (clock() - reftime) * 1000 / CLOCKS_PER_SEC + 1; 
+        log << setw(6) << currDepth << setw(6) << score << setw(15) 
+            << numTotalNodes << setw(10) << currMillis << setw(10)
+            << (unsigned int)((float)numTotalNodes / currMillis * 1000);
+        for (int i = 0; i < pv.size(); ++i)
+            log << " " << pv[i];
+        log << endl;
+
+        log.flush();
+
+        //If the score is so great, then it's probably a win, so don't
+        //search any further
+        if (score >= 25000)
+            break;
+    }
+
+    //extract current turn from pv
+    int firstOppTurn = 0;
+    StepCombo PVToPlay;
+    for (int i = 0; i < pv.size(); ++i)
+    {
+        //stop when the step cost becomes 4, as that has to be the end
+        //of the player's turn. Also stop whenever something that is not
+        //a move is read.
+        if (PVToPlay.stepCost == 4 || pv[i] == string("<HT>"))
+            break;
+
+        StepCombo steps;
+        steps.fromString(pv[i]);
+    
+        PVToPlay.addCombo(steps);
+    }
+
+    return PVToPlay;
+}    
+
+//////////////////////////////////////////////////////////////////////////////
+//Starts a search on the given board as the root node to the given depth and 
+//returns the best combo for the player to move.
+//////////////////////////////////////////////////////////////////////////////
+void Search :: searchRoot(Board& board, int depth)
+{
     //set back history scores to avoid overflows if possible
     for (int f1 = 0; f1 < NUM_SQUARES + 1; f1++)
     {
@@ -125,7 +172,7 @@ StepCombo Search :: searchRoot(Board& board, int depth)
         
     if (numCombos == 0 ) //no moves available? 
     {
-        return StepCombo(); //give an empty step combo
+        return;
     }
 
     if (!lastBestFound)
@@ -162,31 +209,6 @@ StepCombo Search :: searchRoot(Board& board, int depth)
     //add a entry into the hash table for this node
     transTable.setEntry(board.hash, TRANSPOSITION_SCORETYPE_EXACT, score, 
                             depth, bestCombo.getRawMove());
-
-    //stop timing now
-    time_t stoptime = clock();
-
-    millis = (stoptime - reftime) * 1000 / CLOCKS_PER_SEC;
-    totalNodesPerSec = (float)numTotalNodes / (float)millis * 1000;
-    
-    //extract current turn from pv
-    int firstOppTurn = 0;
-    StepCombo PVToPlay;
-    for (int i = 0; i < pv.size(); ++i)
-    {
-        //stop when the step cost becomes 4, as that has to be the end
-        //of the player's turn. Also stop whenever something that is not
-        //a move is read.
-        if (PVToPlay.stepCost == 4 || pv[i] == string("<HT>"))
-            break;
-
-        StepCombo steps;
-        steps.fromString(pv[i]);
-    
-        PVToPlay.addCombo(steps);
-    }
-
-    return PVToPlay;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -792,44 +814,4 @@ StepCombo Search :: getNextBestComboAndRemove(vector<StepCombo>& list,
     list[bestIndex].score = -30000;
     
     return list[bestIndex];
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//returns a string that describes the statistaddScoreEntry
-//////////////////////////////////////////////////////////////////////////////
-string Search :: getStatString()
-{
-    stringstream out;
-
-    out << "Depth: " << maxDepth << endl
-        << "Terminal Nodes: " << numTerminalNodes << endl
-        << "Total Nodes: " <<  numTotalNodes << endl
-        << "Time Taken: " << millis << "ms\n"
-        << "Nodes/Sec: " << totalNodesPerSec << endl
-        << "Score: " << score << endl
-        << "Hash Table Hits: " << hashHits << endl
-        << "Hash Table Collisions: " << collisions << endl;
-
-    out << "PV:";
-    for (int i = 0; i < pv.size(); ++i)
-        out << " " << pv[i];
-    out << endl;
-
-    return out.str();
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//Returns a shorter version of the statisitic string which should fit in
-//one line. It will only tell the depth, score, nodes searched, and the pv
-//////////////////////////////////////////////////////////////////////////////
-string Search :: getShortStatString()
-{
-    stringstream out;
-
-    out << setw(6) << maxDepth << setw(6) << score << setw(11) 
-        << numTotalNodes << setw(10) << millis;
-    for (int i = 0; i < pv.size(); ++i)
-        out << " " << pv[i];
-
-    return out.str();
 }
