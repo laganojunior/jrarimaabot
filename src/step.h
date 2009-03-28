@@ -5,6 +5,7 @@
 #include "defines.h"
 #include "rawmove.h"
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -84,20 +85,6 @@ class StepCombo
     public:
     StepCombo();
     ~StepCombo();
-    StepCombo(const StepCombo& comp)
-    {
-        numSteps = comp.numSteps;
-        stepCost = comp.stepCost;
-        score = comp.score;
-        hasFriendlyCapture = comp.hasFriendlyCapture;
-        friendlyCaptureType = comp.friendlyCaptureType;
-        hasEnemyCapture = comp.hasEnemyCapture;
-        enemyCaptureType = comp.enemyCaptureType;
-        for (int i = 0; i < numSteps; i++)
-        {
-            steps[i].data = comp.steps[i].data;
-        }
-    }
 
     string toString();
     void fromString(string s);
@@ -115,10 +102,10 @@ class StepCombo
 
     bool operator==(StepCombo& comp)
     {
-        if (numSteps != comp.numSteps)
+        if (steps.size() != comp.steps.size())
             return false;
 
-        for (int i = 0; i < numSteps; i++)
+        for (int i = 0; i < steps.size(); i++)
         {
             if (comp.steps[i].data != steps[i].data)
                 return false;  
@@ -126,29 +113,13 @@ class StepCombo
         
         return true;
     }     
-
-    StepCombo& operator=(const StepCombo& comp)
-    {
-        numSteps = comp.numSteps;
-        stepCost = comp.stepCost;
-        score = comp.score;
-        hasFriendlyCapture = comp.hasFriendlyCapture;
-        friendlyCaptureType = comp.friendlyCaptureType;
-        hasEnemyCapture = comp.hasEnemyCapture;
-        enemyCaptureType = comp.enemyCaptureType;
-        for (int i = 0; i < numSteps; i++)
-        {
-            steps[i].data = comp.steps[i].data;
-        }
-        return *this;
-    }
     
-    Step steps[MAX_STEPS_IN_COMBO]; //the set of steps in this combo. 
-                                    //the number was purposefully chosen to
-                                    //be large.
+    vector<Step> steps; //the set of steps in this combo, note that the array
+                        //can be larger than the actual number of steps stored
+                        //Use the variable numSteps to find the actual number.
 
-    unsigned short numSteps; //the number of steps in the steps array
-
+    unsigned int numSteps;   //number of total steps, including captures.
+    
     unsigned short stepCost; //number of actual steps that this combo takes,
                              //note that captures do not count.
 

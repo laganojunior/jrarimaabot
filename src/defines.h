@@ -42,9 +42,6 @@
 
 #define NUM_SQUARES 64
 
-//Stepcombo constants
-#define MAX_STEPS_IN_COMBO 20
-
 //Search constants
 #define SEARCH_MAX_DEPTH 20
 

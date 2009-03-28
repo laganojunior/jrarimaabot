@@ -24,8 +24,14 @@ void KillerMoveTable :: addKillerMove(unsigned int ply, RawMove killer)
 
     //Search if the entry is already present, and just add points to it
     bool found = false;
+    int lowestIndex = 0;
     for (int i = 0; i < killers[ply].size(); i++)
     {
+        if (killers[ply][i].score < killers[ply][lowestIndex].score)
+        {
+            lowestIndex = i;
+        }
+
         if (killers[ply][i].move == killer)
         {
             killers[ply][i].score += 1;
@@ -34,12 +40,8 @@ void KillerMoveTable :: addKillerMove(unsigned int ply, RawMove killer)
         }
     }
 
-    //Sort the killer moves by score
-    stable_sort(killers[ply].begin(), killers[ply].end(), killerMoveCompare);
-
     //if it wasn't found, then add it. If the array is already full, then
-    //just overwrite the one with the lowest score, which is the last
-    //entry.
+    //just overwrite the one with the lowest score
     if (!found)
     {
         if (killers[ply].size() < KILLERMOVETABLE_NUMKILLERSPERPLY)
@@ -51,8 +53,8 @@ void KillerMoveTable :: addKillerMove(unsigned int ply, RawMove killer)
         }
         else
         {
-            killers[ply][KILLERMOVETABLE_NUMKILLERSPERPLY - 1].move = killer;
-            killers[ply][KILLERMOVETABLE_NUMKILLERSPERPLY - 1].score = 1;
+            killers[ply][lowestIndex].move = killer;
+            killers[ply][lowestIndex].score = 1;
         }
     }
 }

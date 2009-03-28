@@ -178,13 +178,16 @@ StepCombo :: ~StepCombo()
 //////////////////////////////////////////////////////////////////////////////
 string StepCombo :: toString()
 {
+    if (steps.empty())
+        return string("");
+
     stringstream stream;
-    for (int i = 0; i < numSteps - 1; ++i)
+    for (int i = 0; i < steps.size() - 1; ++i)
     {
         stream << steps[i].toString() << " ";
     }
 
-    stream << steps[numSteps - 1].toString();
+    stream << steps[steps.size() - 1].toString();
     return stream.str();
 }
 
@@ -217,15 +220,7 @@ void StepCombo :: fromString(string s)
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: addStep(Step step)
 {   
-    if (numSteps >= MAX_STEPS_IN_COMBO)
-    {
-        cerr << toString() << endl;
-    }
-
-    assert(numSteps < MAX_STEPS_IN_COMBO);
-
-    steps[numSteps] = step;
-    ++ numSteps;
+    steps.push_back(step);
 
     if (!step.isCapture())
         ++ stepCost;
@@ -236,14 +231,7 @@ void StepCombo :: addStep(Step step)
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: addCombo(StepCombo& combo)
 {
-    assert(numSteps + combo.numSteps <= MAX_STEPS_IN_COMBO);
-
-    for (int i = 0; i < combo.numSteps; i++)
-    {
-        steps[numSteps + i] = combo.steps[i];
-    }
-    
-    numSteps += combo.numSteps;
+    steps.insert(steps.end(), combo.steps.begin(), combo.steps.end());
     stepCost += combo.stepCost;
 }
 
@@ -308,7 +296,7 @@ RawMove StepCombo :: getRawMove()
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: reset()
 {
-    numSteps = 0;
+    steps.resize(0);
     stepCost = 0;
     score = 0;
     hasFriendlyCapture = false;
