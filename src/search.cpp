@@ -123,6 +123,16 @@ void Search :: searchRoot(Board& board, int depth)
         }
     }
 
+    //make sure to just pass if there are no steps left
+    if (board.stepsLeft == 0)
+    {
+        board.changeTurn();
+        searchRoot(board, depth);
+        board.unchangeTurn(0);
+        score = -score;
+        return;
+    }
+
     //Add this board to the search history
     addSearchHistory(board);
 
@@ -156,7 +166,7 @@ void Search :: searchRoot(Board& board, int depth)
     if (lastBestFound)
     {
         bestCombo = lastBest;
-        score = doMoveAndSearch(board, depth, 0, -30000, 
+        score = doMoveAndSearch(board, depth, 4 - board.stepsLeft, -30000, 
                                           30000, pv, 
                                           lastBest);  
     }
@@ -170,7 +180,7 @@ void Search :: searchRoot(Board& board, int depth)
 
     unsigned int numCombos = board.genMoves(combos[0]);
         
-    if (numCombos == 0 ) //no moves available? 
+    if (numCombos == 0) //no moves available? 
     {
         return;
     }
@@ -192,7 +202,9 @@ void Search :: searchRoot(Board& board, int depth)
         if (next == lastBest)
             continue;
 
-        short nodeScore = doMoveAndSearch(board, depth, 0,  score, 
+        short nodeScore = doMoveAndSearch(board, depth, 
+                                          4 - board.stepsLeft,  
+                                          score, 
                                           30000, pv, 
                                           next); 
 
