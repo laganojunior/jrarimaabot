@@ -83,6 +83,20 @@ class StepCombo
     public:
     StepCombo();
     ~StepCombo();
+    StepCombo(const StepCombo& comp)
+    {
+        numSteps = comp.numSteps;
+        stepCost = comp.stepCost;
+        score = comp.score;
+        hasFriendlyCapture = comp.hasFriendlyCapture;
+        friendlyCaptureType = comp.friendlyCaptureType;
+        hasEnemyCapture = comp.hasEnemyCapture;
+        enemyCaptureType = comp.enemyCaptureType;
+        for (int i = 0; i < numSteps; i++)
+        {
+            steps[i].data = comp.steps[i].data;
+        }
+    }
 
     string toString();
     void fromString(string s);
@@ -114,11 +128,15 @@ class StepCombo
     {
         numSteps = comp.numSteps;
         stepCost = comp.stepCost;
+        score = comp.score;
+        hasFriendlyCapture = comp.hasFriendlyCapture;
+        friendlyCaptureType = comp.friendlyCaptureType;
+        hasEnemyCapture = comp.hasEnemyCapture;
+        enemyCaptureType = comp.enemyCaptureType;
         for (int i = 0; i < numSteps; i++)
         {
             steps[i].data = comp.steps[i].data;
         }
-
         return *this;
     }
     

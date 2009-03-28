@@ -38,7 +38,7 @@
 #define F6 21
 #define C3 42
 #define F3 45
-#define ILLEGAL_SQUARE 65
+#define ILLEGAL_SQUARE 64
 
 #define NUM_SQUARES 64
 

@@ -298,5 +298,10 @@ void StepCombo :: reset()
 {
     numSteps = 0;
     stepCost = 0;
+    score = 0;
+    hasFriendlyCapture = false;
+    friendlyCaptureType = false;
+    hasEnemyCapture = false;
+    enemyCaptureType = false;
 }
     

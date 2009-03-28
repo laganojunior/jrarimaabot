@@ -459,10 +459,10 @@ unsigned int Board :: genMoves(StepCombo combos[])
 
     //some arrays that keep the pre-calculated data on moving leading to
     //captures. indexed by the square moving from.
-    bool canKillItself[64];            //wheter a piece moving to a trap
+    unsigned char canKillItself[64];   //wheter a piece moving to a trap
                                        //would kill itself
 
-    bool leadsToCapture[64];           //wheter a piece moving would lead
+    unsigned char leadsToCapture[64];  //wheter a piece moving would lead
                                        //to a capture of another piece
 
     unsigned char pieceCaptured[64];   //what the other piece captured is
@@ -668,6 +668,8 @@ unsigned int Board :: genMoves(StepCombo combos[])
                 }
                 else
                     combos[numCombos].hasFriendlyCapture = false;
+
+                combos[numCombos].hasEnemyCapture = false;
                 
                 StepCombo prefix = combos[numCombos]; //keep this combo 
                                                       //to prefix pulls.
@@ -939,7 +941,9 @@ unsigned int Board :: genMoves(StepCombo combos[])
                                              typeOfPiece(pieceCaptured[from]);   
             }
             else
-                combos[numCombos].hasFriendlyCapture = false;                
+                combos[numCombos].hasFriendlyCapture = false; 
+
+            combos[numCombos].hasEnemyCapture = false;               
 
             ++numCombos;
         }
