@@ -108,21 +108,6 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 //////////////////////////////////////////////////////////////////////////////
 void Search :: searchRoot(Board& board, int depth)
 {
-    //set back history scores to avoid overflows if possible
-    for (int f1 = 0; f1 < NUM_SQUARES + 1; f1++)
-    {
-        for (int t1 = 0; t1 < NUM_SQUARES + 1; t1++)
-        {
-            for (int f2 = 0;  f2 < NUM_SQUARES + 1; f2++)
-            {
-                for (int c = 0; c < MAX_COLORS; c++)
-                {
-                    eval.historyScore[f1][t1][f2][c] >>=7;
-                }
-            }
-        }
-    }
-
     //make sure to just pass if there are no steps left
     if (board.stepsLeft == 0)
     {
@@ -404,11 +389,6 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                     //increase killer score
                     killerTable.addKillerMove(ply, next.getRawMove());
 
-                    //increase the history score for this move
-                    eval.increaseHistoryScore(next.getFrom1(),
-                          next.getTo1(), next.getFrom2(), 
-                          board.sideToMove,depth);
-
                     return beta;
                 }
             }
@@ -487,9 +467,6 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                 //increase killer score
                 killerTable.addKillerMove(ply, next.getRawMove());
 
-                //increase the history score for this move
-                eval.increaseHistoryScore(next.getFrom1(), next.getTo1(), 
-                                next.getFrom2(), board.sideToMove, depth);
                 return beta;
             }
         }
