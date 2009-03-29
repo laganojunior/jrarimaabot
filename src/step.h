@@ -102,21 +102,21 @@ class StepCombo
     
     void genPass(int stepsLeft)
     {
-        steps.resize(0);
+        numSteps = 0;
         stepCost = stepsLeft;
     }
     
     bool isPass()
     {
-        return steps.empty() && stepCost > 0;
+        return numSteps == 0 && stepCost > 0;
     }
 
     bool operator==(StepCombo& comp)
     {
-        if (steps.size() != comp.steps.size())
+        if (numSteps != comp.numSteps)
             return false;
 
-        for (int i = 0; i < steps.size(); i++)
+        for (int i = 0; i < numSteps; i++)
         {
             if (comp.steps[i].data != steps[i].data)
                 return false;  
@@ -125,9 +125,9 @@ class StepCombo
         return true;
     }     
     
-    vector<Step> steps; //the set of steps in this combo, note that the array
-                        //can be larger than the actual number of steps stored
-                        //Use the variable numSteps to find the actual number.
+    Step steps[8]; //the set of steps in this combo, note that the array
+                   //can be larger than the actual number of steps stored
+                   //Use the variable numSteps to find the actual number.
 
     unsigned int numSteps;   //number of total steps, including captures.
     

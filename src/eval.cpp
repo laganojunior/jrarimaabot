@@ -146,7 +146,7 @@ void Eval :: scoreCombos(vector<StepCombo>& combos, int num,
         //numerically ordered with ELEPHANT being 0, and RABBIT being 5, so
         //to give a sensical score in respect to type, value should reversed
         //in respect to these numbers
-        for (int j = 0; j < combos[i].steps.size(); j++)
+        for (int j = 0; j < combos[i].numSteps; j++)
         {   
             if (combos[i].steps[j].isCapture())
             {

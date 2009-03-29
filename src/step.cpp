@@ -178,16 +178,16 @@ StepCombo :: ~StepCombo()
 //////////////////////////////////////////////////////////////////////////////
 string StepCombo :: toString()
 {
-    if (steps.empty())
+    if (numSteps == 0)
         return string("");
 
     stringstream stream;
-    for (int i = 0; i < steps.size() - 1; ++i)
+    for (int i = 0; i < numSteps - 1; ++i)
     {
         stream << steps[i].toString() << " ";
     }
 
-    stream << steps[steps.size() - 1].toString();
+    stream << steps[numSteps - 1].toString();
     return stream.str();
 }
 
@@ -209,6 +209,14 @@ void StepCombo :: fromString(string s)
         if (stepStream.fail())
             break;
 
+        if (numSteps >= 8)
+        {
+            Error error;
+            error << "From StepCombo :: fromString(string str)\n"
+                  << "Too many steps, already got " << toString() << "\n";
+            throw error;
+        }
+
         Step step;
         step.fromString(word);
         addStep(step);
@@ -220,7 +228,7 @@ void StepCombo :: fromString(string s)
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: addStep(Step step)
 {   
-    steps.push_back(step);
+    steps[numSteps++] = step;
 
     if (!step.isCapture())
         ++ stepCost;
@@ -231,7 +239,11 @@ void StepCombo :: addStep(Step step)
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: addCombo(StepCombo& combo)
 {
-    steps.insert(steps.end(), combo.steps.begin(), combo.steps.end());
+    for (int i = 0; i < combo.numSteps; i++)
+    {
+        steps[numSteps + i] = combo.steps[i];
+    }
+    numSteps += combo.numSteps;
     stepCost += combo.stepCost;
 }
 
@@ -296,7 +308,7 @@ RawMove StepCombo :: getRawMove()
 //////////////////////////////////////////////////////////////////////////////
 void StepCombo :: reset()
 {
-    steps.resize(0);
+    numSteps = 0;
     stepCost = 0;
     score = 0;
 }
