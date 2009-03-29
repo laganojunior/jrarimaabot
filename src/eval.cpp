@@ -146,17 +146,17 @@ void Eval :: scoreCombos(vector<StepCombo>& combos, int num,
         //numerically ordered with ELEPHANT being 0, and RABBIT being 5, so
         //to give a sensical score in respect to type, value should reversed
         //in respect to these numbers
-
-        if (combos[i].hasFriendlyCapture)
-        {
-            combos[i].score -= 1000 * 
-                               (MAX_TYPES - combos[i].friendlyCaptureType);
-        } 
-        
-        if (combos[i].hasEnemyCapture)
-        {
-            combos[i].score += 1000 * 
-                               (MAX_TYPES - combos[i].enemyCaptureType);
+        for (int j = 0; j < combos[i].steps.size(); j++)
+        {   
+            if (combos[i].steps[j].isCapture())
+            {
+                if (colorOfPiece(combos[i].steps[j].getPiece()) == color)
+                    combos[i].score -= 1000 * 
+                    (MAX_TYPES - typeOfPiece(combos[i].steps[j].getPiece()));
+                else
+                    combos[i].score += 1000 * 
+                    (MAX_TYPES - typeOfPiece(combos[i].steps[j].getPiece()));
+            } 
         }
 
         //give moves some score based on push/pulling moves
