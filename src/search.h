@@ -28,9 +28,9 @@ class Search
     ~Search();
 
     StepCombo iterativeDeepen(Board& board, int maxDepth, ostream& log);
-    void searchRoot(Board& board, int depth);
     short searchNode(Board& board, int depth, int ply, short alpha,  
-                              short beta, vector<string>& nodePV);
+                              short beta, vector<string>& nodePV, 
+                              bool isRoot);
     short doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                           short beta, vector<string>& nodePV,
                           StepCombo& combo);
@@ -50,10 +50,6 @@ class Search
                                    //second
     unsigned int hashHits; //number of hits on the hash table for scoring
                            //purposes
-    short score;  //the solved (in respect to the game tree) of the current
-                  //position
-
-    vector<string> pv; //the principal variation
 
     //a hash table to keep transposition data.
     TranspositionTable transTable;

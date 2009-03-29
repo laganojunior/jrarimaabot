@@ -99,6 +99,17 @@ class StepCombo
     RawMove getRawMove();
 
     void reset();
+    
+    void genPass(int stepsLeft)
+    {
+        steps.resize(0);
+        stepCost = stepsLeft;
+    }
+    
+    bool isPass()
+    {
+        return steps.empty() && stepCost > 0;
+    }
 
     bool operator==(StepCombo& comp)
     {

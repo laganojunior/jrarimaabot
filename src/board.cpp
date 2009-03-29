@@ -398,7 +398,10 @@ void Board :: undoStep(Step step)
 //////////////////////////////////////////////////////////////////////////////
 void Board :: playCombo(StepCombo& combo)
 {
-    for (int i = 0; i < combo.steps.size(); ++i)
+    if (combo.isPass())
+        stepsLeft -= combo.stepCost;
+    else
+        for (int i = 0; i < combo.steps.size(); ++i)
         playStep(combo.steps[i]);
 }
 
@@ -407,8 +410,16 @@ void Board :: playCombo(StepCombo& combo)
 //////////////////////////////////////////////////////////////////////////////
 void Board :: undoCombo(StepCombo& combo)
 {
-    for (int i = combo.steps.size() - 1; i >= 0; --i)
-        undoStep(combo.steps[i]);
+    if (combo.isPass())
+        stepsLeft += combo.stepCost;
+    else
+    {
+        if (combo.steps.empty())
+            return;
+
+        for (int i = combo.steps.size() - 1; i >= 0; --i)
+            undoStep(combo.steps[i]);
+    }
 } 
 
 //////////////////////////////////////////////////////////////////////////////

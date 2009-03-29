@@ -49,8 +49,6 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
     //reset search statistics
     numTerminalNodes = 0;
     numTotalNodes = 0;
-    score = -30000;
-    pv.resize(0);
     hashHits = 0;
     
     eval.reset();
@@ -62,9 +60,15 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
     //start timing now
     time_t reftime = clock();
 
+    //Add this board to the search history
+    addSearchHistory(board);
+
+    vector<string> pv;
+
     for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
     {
-        searchRoot(board, currDepth);
+        short score = searchNode(board, currDepth, 4 - board.stepsLeft,
+                                 -30000, 30000, pv, true);
         
         Int64 currMillis = (clock() - reftime) * 1000 / CLOCKS_PER_SEC + 1; 
         log << setw(6) << currDepth << setw(6) << score << setw(15) 
@@ -81,6 +85,8 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
         if (score >= 25000)
             break;
     }
+
+    removeSearchHistory(board);
 
     //extract current turn from pv
     int firstOppTurn = 0;
@@ -103,121 +109,14 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 }    
 
 //////////////////////////////////////////////////////////////////////////////
-//Starts a search on the given board as the root node to the given depth and 
-//returns the best combo for the player to move.
-//////////////////////////////////////////////////////////////////////////////
-void Search :: searchRoot(Board& board, int depth)
-{
-    //make sure to just pass if there are no steps left
-    if (board.stepsLeft == 0)
-    {
-        board.changeTurn();
-        searchRoot(board, depth);
-        board.unchangeTurn(0);
-        score = -score;
-        return;
-    }
-
-    //Add this board to the search history
-    addSearchHistory(board);
-
-    //combo that was the best one to try last time
-    StepCombo lastBest;
-    bool lastBestFound = false;
-
-    //check if there is a hash position of at least this depth, but only
-    //to get the best move from the hash.  
-    if (transTable.hasValidEntry(board.hash))
-    {
-        hashHits++;
-
-        TranspositionEntry entry = transTable.getEntry(board.hash); 
-        if (entry.getNumSteps() == 1)
-        {
-            if (board.gen1Step(lastBest, entry.getFrom1(),
-                              entry.getTo1()))
-                lastBestFound = true;
-        }
-        else
-        {
-            if (board.gen2Step(lastBest, entry.getFrom1(),
-                              entry.getTo1(), entry.getFrom2()))
-                lastBestFound = true;
-        }
-    }
-    
-    //try out the best successor first
-    StepCombo bestCombo;
-    if (lastBestFound)
-    {
-        bestCombo = lastBest;
-        score = doMoveAndSearch(board, depth, 4 - board.stepsLeft, -30000, 
-                                          30000, pv, 
-                                          lastBest);  
-    }
-
-    //Check to make sure the combo arrays has entries up to this ply
-    if ((int)combos.size() < 1)
-    {
-        combos.resize(1);
-        combos[0].resize(SEARCH_MAX_COMBOS_PER_PLY);
-    }
-
-    unsigned int numCombos = board.genMoves(combos[0]);
-        
-    if (numCombos == 0) //no moves available? 
-    {
-        return;
-    }
-
-    if (!lastBestFound)
-        bestCombo = combos[0][0];
-
-    //give the combos some score for move ordering
-    eval.scoreCombos(combos[0], numCombos, board.sideToMove);
-
-    //go through all remaining successors
-    for (int i = 0; i < numCombos; ++i)
-    {
-        //get the next best combo to look at
-        StepCombo next = getNextBestComboAndRemove(combos[0], numCombos);
-
-        //check that this wasn't the last best successor, which was already
-        //searched
-        if (next == lastBest)
-            continue;
-
-        short nodeScore = doMoveAndSearch(board, depth, 
-                                          4 - board.stepsLeft,  
-                                          score, 
-                                          30000, pv, 
-                                          next); 
-
-        if (nodeScore > score)
-        {
-            bestCombo = next;
-            score = nodeScore;
-        }
-    }
-
-    //Remove this board to the search history
-    removeSearchHistory(board);
-
-    //add a entry into the hash table for this node
-    transTable.setEntry(board.hash, TRANSPOSITION_SCORETYPE_EXACT, score, 
-                            depth, bestCombo.getRawMove());
-}
-
-//////////////////////////////////////////////////////////////////////////////
 //runs a search on the given board to the given depth and returns
 //the solved score of this node and writes the principal variation from this
 //node to nodePV. The refer board is the state of the board at the beginning
 //of the turn, so don't go down paths that repeat that state
 //////////////////////////////////////////////////////////////////////////////
 short Search :: searchNode(Board& board, int depth, int ply, short alpha, 
-                           short beta, vector<string>& nodePV)
+                           short beta, vector<string>& nodePV, bool isRoot)
 {   
-
     ++numTotalNodes; //count the node as explored
 
     //check if this is a winning position
@@ -239,6 +138,15 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             return beta;
 
         return thisScore;
+    }
+
+    //make sure to just pass here if there are no steps left, this can only
+    //occur if the root node started with no steps left.
+    if (board.stepsLeft == 0)
+    {
+        StepCombo pass;
+        pass.genPass(0);
+        return doMoveAndSearch(board, depth, ply, alpha, beta, nodePV, pass);
     }
 
     //list of moves to try before generating all the moves
@@ -277,8 +185,10 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                 cutScore = beta;
             }
 
-            //check if the adjustments made a cutoff
-            if (alpha >= beta)
+            //check if the adjustments made a cutoff, but only do it if this
+            //is not the root node, as at the root, there should be at least
+            //one move in the pv.
+            if (alpha >= beta && !isRoot)
             {
                 nodePV.resize(1);
                 nodePV[0] = "<HT>";
@@ -412,7 +322,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         
     if (numCombos == 0 ) 
     {
-        //loss by immobility 
+        //loss by immobility     removeSearchHistory(board);
         return alpha;
     }
 
@@ -521,7 +431,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         nodeScore = searchNode(board, 
                                depth - combo.stepCost,
                                ply + combo.stepCost,
-                               alpha, beta, thisPV);
+                               alpha, beta, thisPV, false);
     }
     else
     {
@@ -549,7 +459,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         nodeScore = -searchNode(board, 
                                 depth - combo.stepCost,
                                 ply + combo.stepCost,
-                                -beta, -alpha, thisPV);
+                                -beta, -alpha, thisPV, false);
 
         //Decrement board state occurences
         gameHistTable.decrementOccur(board.hashPiecesOnly);
