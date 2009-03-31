@@ -144,6 +144,14 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         return lastMove.evalScore;
     }
 
+    //Check if the player has the last move, if the position is already
+    //scored higher than beta, then assuming that this player can only help
+    //the position by moving (he can also just pass, but this bot doesn't
+    //handle passes), this position will lead to a beta cutoff no matter
+    //what.
+    if (depth <= board.stepsLeft && lastMove.evalScore >= beta)
+        return beta;
+
     //make sure to just pass here if there are no steps left, this can only
     //occur if the root node started with no steps left.
     if (board.stepsLeft == 0)
