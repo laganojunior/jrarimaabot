@@ -50,6 +50,12 @@ class Board
     void unchangeTurn(unsigned int oldStepsLeft);
 
     unsigned int genMoves(vector<StepCombo>& combos);
+    unsigned int genDependentMoves(vector<StepCombo>& combos,
+                                   StepCombo& lastMove);
+    void genMovesForPiece(vector<StepCombo>& combos, unsigned int& num,
+                          unsigned char piece, unsigned char square);
+    void genMovesToSquare(vector<StepCombo>& combos, unsigned int& num,
+                          unsigned char to);
     bool gen1Step(StepCombo& combo, unsigned char from, unsigned char to);
     bool gen2Step(StepCombo& combo, unsigned char from1, unsigned char to1,
                                     unsigned char from2);

@@ -919,6 +919,393 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+//Generates the moves that are dependent on the last move having been played.
+//That is, this generates all moves that were not available before the last
+//move was played but are now available after it was played. Returns the
+//number of moves generated.
+//////////////////////////////////////////////////////////////////////////////
+unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
+                                        StepCombo& lastMove)
+{
+    unsigned int num = 0;
+
+    if (stepsLeft < 1)
+        return 0;
+
+    //Generate all moves that the piece last moved (or the friendly piece
+    //last moved if the last move was a push or pull), as clearly these moves
+    //are dependent on the last move.
+    unsigned char lastPiece;
+    unsigned char from;
+
+    //Get the piece and the location it is now on
+    if (colorOfPiece(lastMove.getPiece1()) == sideToMove)
+    {
+        lastPiece = lastMove.getPiece1();
+        from      = lastMove.getTo1();
+        if (lastMove.piece1IsCaptured())
+            return 0;
+    }
+    else
+    {
+        lastPiece = lastMove.getPiece2();
+        //Note the second piece always moves to the location the first
+        //piece moves from, so the second piece is now there.
+        from      = lastMove.getFrom1();
+        if (lastMove.piece2IsCaptured())
+            return 0;
+    }
+    
+    genMovesForPiece(combos, num, lastPiece, from);
+
+    //Note that the above line will generate the move that exactly
+    //counteracts the last move played. Clearly this is undesirable, so go
+    //through the generated list and remove that move
+    if (lastMove.stepCost < 2)
+    {
+        for (int i = 0; i < num; i++)
+        {
+            if (lastMove.getFrom1() == combos[i].getTo1() &&
+                lastMove.getTo1() == combos[i].getFrom1())
+            {
+                for (int j = i; j < num - 1; j++)
+                {
+                    combos[j] = combos[j + 1];
+                }
+                num--;
+                break;
+            }
+        }
+    }
+    else
+    {
+         for (int i = 0; i < num; i++)
+        {
+            if (lastMove.getFrom1() == combos[i].getFrom1() &&
+                lastMove.getTo1() == combos[i].getFrom2()   &&
+                lastMove.getFrom2() == combos[i].getTo1())
+            {
+                for (int j = i; j < num - 1; j++)
+                {
+                    combos[j] = combos[j + 1];
+                }
+                num--;
+                break;
+            }
+        }
+    }
+    //Generate all moves from pieces that the last piece unfroze
+
+    //Check for each friendly neighbor, and see if they were frozen 
+    //before hand. This is true if that neighbor only has 1 friendly neighbor
+    //(which is then just the last piece) and thus was frozen before the
+    //piece moved.
+    Int64 friendNeighbors = getAllPiecesOfColor(sideToMove)
+                          & getNeighbors(from);
+
+    int friendSquare;
+    while ((friendSquare = bitScanForward(friendNeighbors)) != NO_BIT_FOUND)
+    {
+        friendNeighbors ^= Int64FromIndex(friendSquare);
+
+        unsigned char friendPiece = getPieceAt(friendSquare);
+        Int64 enemiesNear = getAllPiecesOfColor(oppColorOf(sideToMove))
+                          & getAllPiecesThatOutrank(typeOfPiece(friendPiece))
+                          & getNeighbors(friendSquare);
+        Int64 friendsNear = getAllPiecesOfColor(sideToMove)
+                          & getNeighbors(friendSquare);
+
+        if (enemiesNear && numBits(friendsNear) == 1)
+        {
+            genMovesForPiece(combos, num, friendPiece, friendSquare);
+        }
+    }
+
+    //In the case of a push or pull, it might be that the piece moved an
+    //enemy piece that froze another piece, so this move indirectly unfroze
+    //those if that was the only enemy piece freezing that piece
+    if (lastMove.stepCost > 1)
+    {
+        unsigned char enemyMovedFrom;
+        unsigned char enemy;
+        if (lastPiece == lastMove.getPiece1())
+        {
+            enemyMovedFrom = lastMove.getFrom2();
+            enemy = lastMove.getPiece2();
+        }
+        else
+        {
+            enemyMovedFrom = lastMove.getFrom1();
+            enemy = lastMove.getPiece1();
+        }
+
+        //Check each neighbor of the square the pulled/pushed piece moved
+        //from and see if they are now not frozen, but were frozen before.
+        Int64 piecesFrozenBefore = getAllPiecesOfColor(sideToMove)
+                                 & getAllPiecesLower(typeOfPiece(enemy))
+                                 & getNeighbors(enemyMovedFrom)
+                                 & ~near(getAllPiecesOfColor(sideToMove));
+ 
+        while ((friendSquare = bitScanForward(piecesFrozenBefore))
+               != NO_BIT_FOUND)
+        {
+            piecesFrozenBefore ^= Int64FromIndex(friendSquare);
+            
+            unsigned char friendPiece = getPieceAt(friendSquare);
+
+            if (!isFrozen(friendSquare, friendPiece))
+            {
+                genMovesForPiece(combos, num, friendPiece, friendSquare);
+            }
+        }
+    }
+
+    //Generate all moves that has pieces moving to the vacated square, 
+    //which in the case for a single step is from1, but for a push or pull
+    //is from2. To prevent the piece that used to be there from moving back,
+    //remove that piece temporarily
+    if (lastMove.stepCost < 2)
+    {
+        removePieceFromBoard(from, colorOfPiece(lastPiece),
+                             typeOfPiece(lastPiece));
+        
+        genMovesToSquare(combos, num, lastMove.getFrom1());
+
+        writePieceOnBoard(from, colorOfPiece(lastPiece),
+                             typeOfPiece(lastPiece));
+    }
+    else
+    {
+        removePieceFromBoard(lastMove.getFrom1(), 
+                             colorOfPiece(lastMove.getPiece2()),
+                             typeOfPiece(lastMove.getPiece2()));
+        
+        genMovesToSquare(combos, num, lastMove.getFrom2());
+
+        writePieceOnBoard(lastMove.getFrom1(), 
+                          colorOfPiece(lastMove.getPiece2()),
+                          typeOfPiece(lastMove.getPiece2()));
+    }
+
+    return num;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Generates all moves for a specified piece being on a specified square. 
+//Writes all the moves in the array given, starting at the index designated
+//by the variable num, and then updates the num variable as it writes moves
+//////////////////////////////////////////////////////////////////////////////
+void Board :: genMovesForPiece(vector<StepCombo>& combos, unsigned int& num,
+                               unsigned char piece, unsigned char square)
+{
+    if (isFrozen(square, piece) || colorOfPiece(piece) != sideToMove
+      || stepsLeft < 1)
+        return;
+
+    Int64 allPieces = getAllPieces();
+    
+    Int64 freeNeighbors;
+
+    if (typeOfPiece(piece) != RABBIT) 
+        freeNeighbors = getNeighbors(square) & ~allPieces;
+    else
+    {
+        if (sideToMove == GOLD)
+            freeNeighbors = getNeighborsUp(square) & ~allPieces;
+        else
+            freeNeighbors = getNeighborsDown(square) & ~allPieces;
+    }
+
+    //Iterate through all empty squares to move to
+    int to;
+    while ((to = bitScanForward(freeNeighbors)) != NO_BIT_FOUND)
+    {
+        freeNeighbors ^= Int64FromIndex(to);
+
+        //generate the 1 step
+        Step step, captureStep;
+        StepCombo prefix;
+        
+        step.genMove(piece, square, to);
+        prefix.addStep(step);
+
+        if (moveLeadsToCapture(step, captureStep))
+            prefix.addStep(captureStep);
+
+        //Add the 1 step to the generated moves and increment the count
+        combos[num++] = prefix;
+
+        //Try to extend the 1 steps to pulls, by finding lower ranking 
+        //neighbors and moving them to the spot this piece moved from
+        if (stepsLeft > 1)
+        {
+            //temporarily make the first part of the pull so that 
+            //captures can be detected easily on the second part
+            playCombo(prefix);
+
+            Int64 lowNeighbors = getAllPiecesLower(typeOfPiece(piece))
+                             & getAllPiecesOfColor(oppColorOf(sideToMove))
+                               & getNeighbors(square);
+            
+            int lowFrom;
+            while ((lowFrom = bitScanForward(lowNeighbors))
+                    != NO_BIT_FOUND)
+            {
+                lowNeighbors ^= Int64FromIndex(lowFrom);
+
+                //Generate the full pull move
+                StepCombo pull = prefix;
+                step.genMove(getPieceAt(lowFrom), lowFrom, square);
+                pull.addStep(step);
+
+                if (moveLeadsToCapture(step, captureStep))
+                    pull.addStep(captureStep);
+
+                //Add the pull to the generated moves
+                combos[num++] = pull;
+            }
+
+            //Undo the first part
+            undoCombo(prefix);
+        }   
+    }
+    
+    //Generate pushes by moving each lower neighbor to a square and
+    //moving this piece to the newly empty neighboring square
+    if (stepsLeft > 1)
+    {
+        Int64 lowNeighbors = getAllPiecesLower(typeOfPiece(piece))
+                           & getAllPiecesOfColor(oppColorOf(sideToMove))
+                           & getNeighbors(square);
+
+        // Go through all neighboring lower pieces
+        int lowFrom;
+        while ((lowFrom = bitScanForward(lowNeighbors))
+                != NO_BIT_FOUND)
+        {
+            lowNeighbors ^= Int64FromIndex(lowFrom);
+
+            //Go through all squares to push this piece to
+            Int64 lowDest = getNeighbors(lowFrom) & ~allPieces;
+            
+            int lowTo;
+            while ((lowTo = bitScanForward(lowDest))
+                   != NO_BIT_FOUND)
+            {
+                lowDest ^= Int64FromIndex(lowTo);
+                
+                //Generate the first part of the push
+                StepCombo prefix;
+                Step step, captureStep;
+                
+                step.genMove(getPieceAt(lowFrom), lowFrom, lowTo);
+                prefix.addStep(step);
+                if (moveLeadsToCapture(step, captureStep))
+                    prefix.addStep(captureStep);
+
+                //Temporarily play the first part to detect captures
+                //when playing the second.
+                playCombo(prefix);
+
+                //Generate the full push
+                StepCombo push = prefix;
+
+                step.genMove(piece, square, lowFrom);
+                push.addStep(step);
+                if (moveLeadsToCapture(step, captureStep))
+                    push.addStep(captureStep);     
+
+                //Add the push      
+                combos[num++] = push;
+
+                //Undo the first part
+                undoCombo(prefix);       
+            }        
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Generates all moves that involved the first moving piece moving to the
+//specified square. Writes all the moves in the array given, starting at the 
+//index designated by the variable num, and then updates the num variable as 
+//it writes moves
+//////////////////////////////////////////////////////////////////////////////
+void Board :: genMovesToSquare(vector<StepCombo>& combos, unsigned int& num,
+                               unsigned char to)
+{
+    if (stepsLeft < 1)  
+        return;
+
+    //Find all neighbors on the side to move
+    Int64 movers = getAllPiecesOfColor(sideToMove)
+                 & getNeighbors(to);
+
+    int from;
+    while ((from = bitScanForward(movers)) != NO_BIT_FOUND)
+    {
+        movers ^= Int64FromIndex(from);
+        unsigned char piece = getPieceAt(from);
+
+        if (isFrozen(from, piece))
+            continue;
+
+        //Make sure a rabbit isn't moving backward
+        if (typeOfPiece(piece) == RABBIT &&
+            ((from - to == 8 && sideToMove == SILVER) ||
+            (to - from == 8 && sideToMove == GOLD)))
+            continue;
+ 
+        //generate the 1 step
+        Step step, captureStep;
+        StepCombo prefix;
+        
+        step.genMove(piece, from, to);
+        prefix.addStep(step);
+
+        if (moveLeadsToCapture(step, captureStep))
+            prefix.addStep(captureStep);
+
+        //Add the 1 step to the generated moves and increment the count
+        combos[num++] = prefix;
+
+        //Try to extend the 1 steps to pulls, by finding lower ranking 
+        //neighbors and moving them to the spot this piece moved from
+        if (stepsLeft > 1)
+        {
+            //temporarily make the first part of the pull so that 
+            //captures can be detected easily on the second part
+            playCombo(prefix);
+
+            Int64 lowNeighbors = getAllPiecesLower(typeOfPiece(piece))
+                             & getAllPiecesOfColor(oppColorOf(sideToMove))
+                               & getNeighbors(from);
+            
+            int lowFrom;
+            while ((lowFrom = bitScanForward(lowNeighbors))
+                    != NO_BIT_FOUND)
+            {
+                lowNeighbors ^= Int64FromIndex(lowFrom);
+
+                //Generate the full pull move
+                StepCombo pull = prefix;
+                step.genMove(getPieceAt(lowFrom), lowFrom, from);
+                pull.addStep(step);
+
+                if (moveLeadsToCapture(step, captureStep))
+                    pull.addStep(captureStep);
+
+                //Add the pull to the generated moves
+                combos[num++] = pull;
+            }
+
+            //Undo the first part
+            undoCombo(prefix);
+        }   
+    }
+}
+    
+//////////////////////////////////////////////////////////////////////////////
 //Attempt to generate the 1-step move using the from and to square specified. 
 //If it is a legal move, then it is written onto the combo given and true is
 //return. If it is not, false is returned.

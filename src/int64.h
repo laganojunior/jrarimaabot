@@ -25,6 +25,7 @@ extern Int64 neighborsdown[64];
 extern Int64 traps;
 extern Int64 trapNeighbors;
 extern Int64 rows[8];
+extern Int64 cols[8];
 extern Int64 centerRings[4];
 
 //some functions implemented in int64.cpp
@@ -51,6 +52,14 @@ inline Int64 Int64FromIndex(unsigned int index)
 inline int bitScanForward(Int64 i)
 {
     return __builtin_ffsll(i) - 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Returns the number of bits set to 1 in a 64 bit integer.
+//////////////////////////////////////////////////////////////////////////////
+inline int numBits(Int64 i)
+{
+    return __builtin_popcountll(i);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -127,6 +136,18 @@ inline Int64 getRow(int row)
 inline Int64 getCenterRing(int i)
 {
     return centerRings[i];
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Returns the bitboard that represents all squares "near" any square set to
+//1 on the input bitboard. That is, this returns the bitboard that has bits
+//set to 1 iff that bit is distance 1 left, right, up or down from a 1 bit
+//on the input bitboard
+//////////////////////////////////////////////////////////////////////////////
+inline Int64 near(Int64 i)
+{
+    return ((i << 1) & ~cols[0]) | ((i >> 1) & ~cols[7])
+           | (i << 8) | (i >> 8);
 }
 
 #endif

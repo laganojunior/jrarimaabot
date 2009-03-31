@@ -30,10 +30,11 @@ class Search
     StepCombo iterativeDeepen(Board& board, int maxDepth, ostream& log);
     short searchNode(Board& board, int depth, int ply, short alpha,  
                               short beta, vector<string>& nodePV, 
-                              bool isRoot);
+                              bool isRoot, StepCombo& lastMove,
+                              bool genDependent);
     short doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                           short beta, vector<string>& nodePV,
-                          StepCombo& combo);
+                          StepCombo& combo, short nodeScore);
 
     void loadMoveFile(string filename, Board board);  
 
