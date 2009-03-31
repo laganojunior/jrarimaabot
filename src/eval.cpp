@@ -23,13 +23,13 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     int score;
     
     //material
-    int material = __builtin_popcountll(board.pieces[GOLD][ELEPHANT]) * 2000
+    int material = __builtin_popcountll(board.pieces[GOLD][ELEPHANT]) * 1200
                  + __builtin_popcountll(board.pieces[GOLD][CAMEL]) * 700 
                  + __builtin_popcountll(board.pieces[GOLD][HORSE]) * 500 
                  + __builtin_popcountll(board.pieces[GOLD][DOG]) * 300 
                  + __builtin_popcountll(board.pieces[GOLD][CAT]) * 200
                  + __builtin_popcountll(board.pieces[GOLD][RABBIT]) * 100
-                 - __builtin_popcountll(board.pieces[SILVER][ELEPHANT]) * 2000
+                 - __builtin_popcountll(board.pieces[SILVER][ELEPHANT]) * 1200
                  - __builtin_popcountll(board.pieces[SILVER][CAMEL]) * 700 
                  - __builtin_popcountll(board.pieces[SILVER][HORSE]) * 500 
                  - __builtin_popcountll(board.pieces[SILVER][DOG]) * 300 
@@ -37,7 +37,7 @@ short Eval :: evalBoard(Board& board, unsigned char color)
                  - __builtin_popcountll(board.pieces[SILVER][RABBIT]) * 100;
 
     //rabbit advancement
-    int advance = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(0)) * 30000
+    int advance = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(0)) * 25000
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(1)) * 50
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 40
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 20
@@ -45,7 +45,7 @@ short Eval :: evalBoard(Board& board, unsigned char color)
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 10
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(6)) * 5
                 + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 20
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(7)) * 30000
+                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(7)) * 25000
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(6)) * 50
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 40
                 - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 20

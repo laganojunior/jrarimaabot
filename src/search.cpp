@@ -82,7 +82,7 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 
         //If the score is so great, then it's probably a win, so don't
         //search any further
-        if (score >= 25000)
+        if (score >= 20000)
             break;
     }
 
