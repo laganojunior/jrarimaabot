@@ -491,6 +491,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         combo.evalScore = eval.evalBoard(board, board.sideToMove);
         if (combo.evalScore <= lastScore)
         {
+            removeSearchHistory(board);
             board.undoCombo(combo);            
             return alpha;
         }
