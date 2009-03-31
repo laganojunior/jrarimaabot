@@ -478,6 +478,15 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
     {
         //turn change is forced.
 
+        //Check if the move helped the position. If not, then this move by
+        //assumption cannot have been the best move to play
+        combo.evalScore = eval.evalBoard(board, board.sideToMove);
+        if (combo.evalScore <= lastScore)
+        {
+            board.undoCombo(combo);            
+            return alpha;
+        }
+
         //change state to fresh opponent turn
         unsigned char oldnumsteps = board.stepsLeft;
         board.changeTurn();
@@ -499,7 +508,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         //search through opponent's turn
         StepCombo pass;
         pass.genPass(board.stepsLeft);
-        pass.evalScore = eval.evalBoard(board, board.sideToMove);
+        pass.evalScore = -combo.evalScore;
         nodeScore = -searchNode(board, 
                                 depth - combo.stepCost,
                                 ply + combo.stepCost,
