@@ -181,10 +181,14 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
             {       
                 cutScore = thisEntry.getScore();
+                if (cutScore > beta)
+                    cutScore = beta;
+
+                if (cutScore < alpha)
+                    cutScore = alpha;
+
                 alpha = cutScore;
                 beta = cutScore;
-                
-                
             }
 
             //upper bound adjust
