@@ -499,6 +499,14 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
     {
         //turn change is forced.
 
+        //Check if the position is now a win for the player that just moved
+        if (eval.isWin(board, board.sideToMove))
+        {
+            board.undoCombo(combo);            
+            return beta;
+        }
+            
+
         //Check if the move helped the position. If not, then this move by
         //assumption cannot have been the best move to play
         combo.evalScore = eval.evalBoard(board, board.sideToMove);
