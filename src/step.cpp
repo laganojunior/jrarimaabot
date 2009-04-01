@@ -292,6 +292,67 @@ unsigned char StepCombo :: getFrom2()
 }
 
 //////////////////////////////////////////////////////////////////////////////
+//Returns the first moving piece. Returns NO_PIECE if there isn't any
+//////////////////////////////////////////////////////////////////////////////
+unsigned char StepCombo :: getPiece1()
+{
+    if (stepCost < 1)
+        return NO_PIECE;
+
+    return steps[0].getPiece();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Returns the second moving piece. Returns NO_PIECE if there isn't any
+//////////////////////////////////////////////////////////////////////////////
+unsigned char StepCombo :: getPiece2()
+{
+    if (stepCost < 2)
+        return NO_PIECE;
+
+    //note that second step can denote a capture, so the actual
+    //second moving step can be afterward
+    unsigned int secondMoveIndex = 1;
+
+    if (steps[1].isCapture())
+        secondMoveIndex = 2;
+
+    return steps[secondMoveIndex].getPiece();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Returns true iff the first moving piece (if any) is captured
+//////////////////////////////////////////////////////////////////////////////
+bool StepCombo :: piece1IsCaptured()
+{
+    if (numSteps < 2)
+        return false;
+
+    return steps[1].isCapture();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Returns true iff the first moving piece (if any) is captured
+//////////////////////////////////////////////////////////////////////////////
+bool StepCombo :: piece2IsCaptured()
+{
+    if (stepCost < 2)
+        return false;
+
+    //note that second step can denote a capture, so the actual
+    //second moving step can be afterward
+    unsigned int secondMoveIndex = 1;
+
+    if (steps[1].isCapture())
+        secondMoveIndex = 2;
+
+    if (numSteps < secondMoveIndex + 2)
+        return false;
+
+    return steps[secondMoveIndex].getPiece();
+}
+
+//////////////////////////////////////////////////////////////////////////////
 //Returns a raw move structure depicting up to the first 2 moves of this
 //combo
 //////////////////////////////////////////////////////////////////////////////

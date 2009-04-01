@@ -30,6 +30,7 @@ Int64 trapNeighbors; //bitboard that represents the neighbors of (but not
                      //including) trap squares
 
 Int64 rows[8]; //bitboards that represent the rows on a bitboard
+Int64 cols[8]; //bitboards that represent the columns on a bitboard
 
 Int64 centerRings[4]; //bitboards that represent the concentric rings of
                       //squares about the center.
@@ -117,6 +118,15 @@ void initInt64()
     for (int i = 0; i < 8; i++)
     {
         rows[i] = (Int64)0xFF << (8 * i);
+    }
+
+    //initialize columns
+    for (int i = 0; i < 8; i++)
+    {
+        cols[i] = ((Int64)1 << i) | ((Int64)1 << i + 8)
+                | ((Int64)1 << i + 16) | ((Int64)1 << i + 24)
+                | ((Int64)1 << i + 32) | ((Int64)1 << i + 40)
+                | ((Int64)1 << i + 48) | ((Int64)1 << i + 56);
     }
 
     //initialize center rings

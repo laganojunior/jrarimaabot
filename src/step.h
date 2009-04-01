@@ -95,6 +95,11 @@ class StepCombo
     unsigned char getFrom1();
     unsigned char getTo1();
     unsigned char getFrom2();
+    unsigned char getPiece1();
+    unsigned char getPiece2();
+
+    bool piece1IsCaptured();
+    bool piece2IsCaptured();
 
     RawMove getRawMove();
 
@@ -137,6 +142,8 @@ class StepCombo
     short score; //a heurisitic score used for move ordering. Has nothing
                  //to do with scores used in scoring boards and solving the
                  //game tree.
+    short evalScore; //the score that the static evaluation returned on the
+                     //board state after this move was played.
 };
 
 #endif

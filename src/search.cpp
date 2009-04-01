@@ -67,8 +67,11 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 
     for (int currDepth = 1; currDepth <= maxDepth; currDepth++)
     {
+        StepCombo pass;
+        pass.genPass(board.stepsLeft);
+        pass.evalScore = eval.evalBoard(board, board.sideToMove);
         short score = searchNode(board, currDepth, 4 - board.stepsLeft,
-                                 -30000, 30000, pv, true);
+                                 -30000, 30000, pv, true, pass, false);
         
         Int64 currMillis = (clock() - reftime) * 1000 / CLOCKS_PER_SEC + 1; 
         log << setw(6) << currDepth << setw(6) << score << setw(15) 
@@ -89,14 +92,13 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
     removeSearchHistory(board);
 
     //extract current turn from pv
-    int firstOppTurn = 0;
     StepCombo PVToPlay;
     for (int i = 0; i < pv.size(); ++i)
     {
-        //stop when the step cost becomes 4, as that has to be the end
-        //of the player's turn. Also stop whenever something that is not
-        //a move is read.
-        if (PVToPlay.stepCost == 4 || pv[i] == string("<HT>"))
+        //stop when the step cost becomes the amount of steps left, as that
+        //has to be the end of the player's turn. Also stop whenever 
+        //something that is not a move is read.
+        if (PVToPlay.stepCost == board.stepsLeft || pv[i] == string("<HT>"))
             break;
 
         StepCombo steps;
@@ -115,7 +117,8 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 //of the turn, so don't go down paths that repeat that state
 //////////////////////////////////////////////////////////////////////////////
 short Search :: searchNode(Board& board, int depth, int ply, short alpha, 
-                           short beta, vector<string>& nodePV, bool isRoot)
+                           short beta, vector<string>& nodePV, bool isRoot
+                           ,StepCombo& lastMove, bool genDependent)
 {   
     ++numTotalNodes; //count the node as explored
 
@@ -130,15 +133,24 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     if (depth <= 0) //terminal node due to depth
     {
         ++numTerminalNodes; //this node is terminal
-        short thisScore = eval.evalBoard(board, board.sideToMove);
-        if (thisScore < alpha)  
+        //Get the evaluated score, which is stored as the lastMove's score
+        //But make sure it is within the alpha-beta window
+        if (lastMove.evalScore < alpha)  
             return alpha;
         
-        if (thisScore > beta)
+        if (lastMove.evalScore > beta)
             return beta;
 
-        return thisScore;
+        return lastMove.evalScore;
     }
+
+    //Check if the player has the last move, if the position is already
+    //scored higher than beta, then assuming that this player can only help
+    //the position by moving (he can also just pass, but this bot doesn't
+    //handle passes), this position will lead to a beta cutoff no matter
+    //what.
+    if (depth <= board.stepsLeft && lastMove.evalScore >= beta)
+        return beta;
 
     //make sure to just pass here if there are no steps left, this can only
     //occur if the root node started with no steps left.
@@ -146,7 +158,9 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     {
         StepCombo pass;
         pass.genPass(0);
-        return doMoveAndSearch(board, depth, ply, alpha, beta, nodePV, pass);
+        pass.evalScore = eval.evalBoard(board, board.sideToMove);
+        return doMoveAndSearch(board, depth, ply, alpha, beta, nodePV, pass,
+                               pass.evalScore);
     }
 
     //list of moves to try before generating all the moves
@@ -166,9 +180,11 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             short cutScore;
             if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
             {       
-                alpha = thisEntry.getScore();
-                beta = alpha;
-                cutScore = alpha;
+                cutScore = thisEntry.getScore();
+                alpha = cutScore;
+                beta = cutScore;
+                
+                
             }
 
             //upper bound adjust
@@ -282,7 +298,8 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             StepCombo next = preGenSteps[i];
 
             short nodeScore = doMoveAndSearch(board, depth, ply, alpha, 
-                                              beta, nodePV, next); 
+                                              beta, nodePV, next,
+                                              lastMove.evalScore); 
 
             if (nodeScore > alpha) 
             {   
@@ -317,12 +334,33 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     }
 
     //If no cutoff was caused by the pre generation steps, generate the
-    //remaining list of moves to explore
-    unsigned int numCombos = board.genMoves(combos[ply]);
+    //remaining list of moves to explore. This can be the full list or the
+    //list of moves dependent on the last move.
+    //
+    //Generate dependent moves on these conditions:
+    //1) The ply indicates that this is the second step in the player's move.
+    //   Since usually the best move does not consist of 4 independent steps,
+    //   it is same to assume that at least one step is dependent on a 
+    //   previous one. Thus force the second step to be dependent on the first
+    //2) The genDependent flag was passed true. This occurs if
+    //   doMoveAndSearch detects that the last step did not make the position
+    //   better. By assuming that there always exists a move that improves
+    //   the current position, the only way that the prior step can lead to
+    //   the best step combo is if it unlocks another step that improves the
+    //   position.
+    unsigned int numCombos; 
+    if ((ply % 4 == 1 || genDependent) && lastMove.numSteps > 0)
+    {
+        numCombos = board.genDependentMoves(combos[ply], lastMove);
+    }
+    else
+    {
+        numCombos = board.genMoves(combos[ply]);
+    }
         
     if (numCombos == 0 ) 
     {
-        //loss by immobility     removeSearchHistory(board);
+        //loss by immobility
         return alpha;
     }
 
@@ -359,7 +397,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         //explore the subtree for this move.
 
         short nodeScore = doMoveAndSearch(board, depth, ply, alpha, beta, 
-                                          nodePV, next); 
+                                          nodePV, next, lastMove.evalScore); 
             
         if (nodeScore > alpha) 
         {   
@@ -406,7 +444,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
 //////////////////////////////////////////////////////////////////////////////
 short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                                 short beta, vector<string>& nodePV,
-                                StepCombo& combo)
+                                StepCombo& combo, short lastScore)
 {
     
     board.playCombo(combo);  
@@ -427,15 +465,36 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
     //branch off wheter or not the turn has to be passed or not
     if (board.stepsLeft != 0)
     {
+        //Check if the move helped the position. If not, then dependent moves
+        //must be generated next turn
+        combo.evalScore = eval.evalBoard(board, board.sideToMove);
+
+        bool genDependent;
+        if (combo.evalScore <= lastScore)
+            genDependent = true;
+        else
+            genDependent = false;
+
         //steps remaining, keep searching within this player's turn
         nodeScore = searchNode(board, 
                                depth - combo.stepCost,
                                ply + combo.stepCost,
-                               alpha, beta, thisPV, false);
+                               alpha, beta, thisPV, false, combo,
+                               genDependent);
     }
     else
     {
         //turn change is forced.
+
+        //Check if the move helped the position. If not, then this move by
+        //assumption cannot have been the best move to play
+        combo.evalScore = eval.evalBoard(board, board.sideToMove);
+        if (combo.evalScore <= lastScore)
+        {
+            removeSearchHistory(board);
+            board.undoCombo(combo);            
+            return alpha;
+        }
 
         //change state to fresh opponent turn
         unsigned char oldnumsteps = board.stepsLeft;
@@ -456,10 +515,14 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         gameHistTable.incrementOccur(board.hashPiecesOnly);
 
         //search through opponent's turn
+        StepCombo pass;
+        pass.genPass(board.stepsLeft);
+        pass.evalScore = -combo.evalScore;
         nodeScore = -searchNode(board, 
                                 depth - combo.stepCost,
                                 ply + combo.stepCost,
-                                -beta, -alpha, thisPV, false);
+                                -beta, -alpha, thisPV, false, pass,
+                                false);
 
         //Decrement board state occurences
         gameHistTable.decrementOccur(board.hashPiecesOnly);
