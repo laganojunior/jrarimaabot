@@ -11,31 +11,8 @@
 
 using namespace std;
 
-//Hash entry to see if a position has already occurred down the current 
-//search path. Used to avoid repititions
-class SearchHistEntry
-{
-    public:
-    SearchHistEntry()
-    {
-        reset();
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    //Resets the entry to nothing.
-    //////////////////////////////////////////////////////////////////////////
-    void reset()
-    {
-        occured = false;
-    }
-
-
-    char occured; 
-    
-};
-
 //Generic Hash table template class
-template <class T> //Note, T should have a reset() functions
+template <class T>
 class HashTable
 {
     public:
@@ -52,8 +29,6 @@ class HashTable
 	//////////////////////////////////////////////////////////////////////////
 	T& getEntry(Int64 key)
 	{
-		assert (key>=0 && key < entries.size());
-
 		return entries[key];
 	}
 

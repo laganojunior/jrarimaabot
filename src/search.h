@@ -6,6 +6,7 @@
 #include "board.h"
 #include "step.h"
 #include "gamehist.h"
+#include "searchhist.h"
 #include "hash.h"
 #include "eval.h"
 #include "killer.h"
@@ -17,7 +18,8 @@
 #define SEARCH_MAX_COMBOS_PER_PLY 120
 
 //hash bit constants
-#define SEARCH_SEARCH_HIST_HASH_BITS 20
+#define SEARCH_HIST_HASH_BITS 18
+#define GAME_HIST_HASH_BITS 15
 
 using namespace std;
 
@@ -38,10 +40,6 @@ class Search
 
     void loadMoveFile(string filename, Board board);  
 
-    void addSearchHistory(Board& board);
-    void removeSearchHistory(Board& board);
-    bool  hasOccured(Board& board);
-
     StepCombo getNextBestComboAndRemove(vector<StepCombo>& list, 
                                         unsigned int num);
 
@@ -60,11 +58,10 @@ class Search
     //which is a loss.
     GameHistTable gameHistTable;
 
-    //a hash table to keep data on which positions are in this search path
-    //down the tree. This is used to eliminate moves that just lead to
-    //repeating positions
-    HashTable<SearchHistEntry> searchHist;
-    Int64 searchHistHashMask;
+    //a hash table to keep data on which positions have already occured at 
+    //an earlier ply in the same turn in order to not repeat nodes. One is
+    //kept for every turn ply.
+    vector<SearchHistTable> searchHistTables;
 
     //Killer move table
     KillerMoveTable killerTable;
