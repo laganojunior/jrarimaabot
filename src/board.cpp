@@ -460,12 +460,10 @@ void Board :: unchangeTurn(unsigned int oldStepsLeft)
 //Generates some set of steps combos that can played on the current board
 //state. Note this will not generate all possible combos (that's a lot of 
 //combos), but rather all 1-steps and push/pull combos, and perhaps some 
-//interesting other multi-step combos. Returns the number of moves generated.
-//
-//Note the array passed must be of large size, as this function cannot
-//and will not check if it passed the limit.
+//interesting other multi-step combos. Returns the number of moves generated
+//and appends all moves generated at the end of the list given
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genMoves(vector<StepCombo>& combos)
+unsigned int Board :: genMoves(list<StepCombo>& combos)
 {
     if (stepsLeft < 1) //no steps left to move
         return 0;
@@ -663,29 +661,28 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                 freeNeighbors ^= Int64FromIndex(to);
 
                 //write the 1-step///////////////////////////
-                combos[numCombos].reset();
+                StepCombo prefix;
     
                 //write the moving step
                 step.genMove(piece,from,to);
-                combos[numCombos].addStep(step);
+                prefix.addStep(step);
 
                 //write capture steps if necessary
                 if (canKillItself[from] && to == captureSquare[from])
                 {
                     step.genCapture(piece, captureSquare[from]);
-                    combos[numCombos].addStep(step);                 
+                    prefix.addStep(step);                 
                 }
                 
                 if (leadsToCapture[from])
                 {
                     step.genCapture(pieceCaptured[from], captureSquare[from]);
-                    combos[numCombos].addStep(step);
+                    prefix.addStep(step);
                 }
                 
-                StepCombo prefix = combos[numCombos]; //keep this combo 
-                                                      //to prefix pulls.
-
-                ++numCombos;//note that piece is captured for scoring purposes
+                //add the move to the list
+                combos.push_back(prefix);
+                numCombos++;
 
                 //write pulls for every lower neighbor. Keep a copy of the
                 //bitboard as it is used again for pushes.
@@ -701,12 +698,12 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                         unsigned char lowerPiece = getPieceAt(lowerSquare);
 
                         //copy the prefix to start the pull
-                        combos[numCombos] = prefix;
+                        StepCombo pull = prefix;
                     
                         //add the pulling move, note the lower piece moves 
                         //onto the square this moves from.
                         step.genMove(lowerPiece,lowerSquare,from);
-                        combos[numCombos].addStep(step);
+                        pull.addStep(step);
         
                         //add necessary captures
 
@@ -716,7 +713,7 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                             step.genCapture(lowerPiece, 
                                             captureSquare[lowerSquare]);
 
-                            combos[numCombos].addStep(step);
+                            pull.addStep(step);
                         }
                         
                         if (leadsToCapture[lowerSquare])
@@ -724,9 +721,11 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                             step.genCapture(pieceCaptured[lowerSquare], 
                                             captureSquare[lowerSquare]);
 
-                            combos[numCombos].addStep(step);
+                            pull.addStep(step);
                         }
                     
+                        //Add the combo
+                        combos.push_back(pull);
                         numCombos++;
                     }
                 }   
@@ -756,11 +755,11 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                     {
                         freePushSquares ^= Int64FromIndex(pushSquare);
 
-                        combos[numCombos].reset();
+                        StepCombo push;
 
                         //add the pushing step
                         step.genMove(lowerPiece,lowerSquare,pushSquare);
-                        combos[numCombos].addStep(step);
+                        push.addStep(step);
 
                         //add necessary captures
                         
@@ -770,7 +769,7 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                             step.genCapture(lowerPiece, 
                                             captureSquare[lowerSquare]);
 
-                            combos[numCombos].addStep(step);
+                            push.addStep(step);
                         }
                         
                         if (leadsToCapture[lowerSquare])
@@ -778,30 +777,32 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
                             step.genCapture(pieceCaptured[lowerSquare], 
                                             captureSquare[lowerSquare]);
 
-                            combos[numCombos].addStep(step);
+                            push.addStep(step);
                         }                           
                         
 
                         //complete the push by moving onto the square the
                         //enemy piece was pushed from
                         step.genMove(piece,from,lowerSquare);
-                        combos[numCombos].addStep(step);
+                        push.addStep(step);
 
                         //write capture steps if necessary
                         if (canKillItself[from] 
                             && lowerSquare == captureSquare[from])
                         {
                             step.genCapture(piece, captureSquare[from]);
-                            combos[numCombos].addStep(step);
+                            push.addStep(step);
                         }
                         
                         if (leadsToCapture[from])
                         {
                             step.genCapture(pieceCaptured[from], 
                             captureSquare[from]);
-                            combos[numCombos].addStep(step);
+                            push.addStep(step);
                         }
 
+                        //Add the move
+                        combos.push_back(push);
                         ++numCombos;
                     }
                 }
@@ -892,25 +893,27 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
             //erase this bit from the bitboard.
             freeNeighbors ^= Int64FromIndex(to);
 
-            combos[numCombos].reset();
+            StepCombo move;
 
             //write the moving step
             step.genMove(piece,from,to);
-            combos[numCombos].addStep(step);
+            move.addStep(step);
 
             //write capture steps if necessary
             if (canKillItself[from] && to == captureSquare[from])
             {
                 step.genCapture(piece, captureSquare[from]);
-                combos[numCombos].addStep(step);
+                move.addStep(step);
             }
             
             if (leadsToCapture[from])
             {
                 step.genCapture(pieceCaptured[from], captureSquare[from]);
-                combos[numCombos].addStep(step);
+                move.addStep(step);
             }            
 
+            //Add the step
+            combos.push_back(move);
             ++numCombos;
         }
     }
@@ -922,9 +925,9 @@ unsigned int Board :: genMoves(vector<StepCombo>& combos)
 //Generates the moves that are dependent on the last move having been played.
 //That is, this generates all moves that were not available before the last
 //move was played but are now available after it was played. Returns the
-//number of moves generated.
+//number of moves generated and appends the move generated to the list given
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
+unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
                                         StepCombo& lastMove)
 {
     unsigned int num = 0;
@@ -956,22 +959,20 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
             return 0;
     }
     
-    genMovesForPiece(combos, num, lastPiece, from);
+    num += genMovesForPiece(combos, lastPiece, from);
 
     //Note that the above line will generate the move that exactly
     //counteracts the last move played. Clearly this is undesirable, so go
     //through the generated list and remove that move
     if (lastMove.stepCost < 2)
     {
-        for (int i = 0; i < num; i++)
+        for (list<StepCombo> :: iterator iter = combos.begin(); 
+             iter != combos.end(); iter++)
         {
-            if (lastMove.getFrom1() == combos[i].getTo1() &&
-                lastMove.getTo1() == combos[i].getFrom1())
+            if (lastMove.getFrom1() == iter->getTo1() &&
+                lastMove.getTo1() == iter->getFrom1())
             {
-                for (int j = i; j < num - 1; j++)
-                {
-                    combos[j] = combos[j + 1];
-                }
+                combos.erase(iter);
                 num--;
                 break;
             }
@@ -979,21 +980,20 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
     }
     else
     {
-         for (int i = 0; i < num; i++)
+        for (list<StepCombo> :: iterator iter = combos.begin(); 
+             iter != combos.end(); iter++)
         {
-            if (lastMove.getFrom1() == combos[i].getFrom1() &&
-                lastMove.getTo1() == combos[i].getFrom2()   &&
-                lastMove.getFrom2() == combos[i].getTo1())
+            if (lastMove.getFrom1() == iter->getFrom1() &&
+                lastMove.getTo1() == iter->getFrom2()   &&
+                lastMove.getFrom2() == iter->getTo1())
             {
-                for (int j = i; j < num - 1; j++)
-                {
-                    combos[j] = combos[j + 1];
-                }
+                combos.erase(iter);
                 num--;
                 break;
             }
         }
     }
+
     //Generate all moves from pieces that the last piece unfroze
 
     //Check for each friendly neighbor, and see if they were frozen 
@@ -1017,7 +1017,7 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
 
         if (enemiesNear && numBits(friendsNear) == 1)
         {
-            genMovesForPiece(combos, num, friendPiece, friendSquare);
+            num += genMovesForPiece(combos, friendPiece, friendSquare);
         }
     }
 
@@ -1055,7 +1055,7 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
 
             if (!isFrozen(friendSquare, friendPiece))
             {
-                genMovesForPiece(combos, num, friendPiece, friendSquare);
+                num += genMovesForPiece(combos, friendPiece, friendSquare);
             }
         }
     }
@@ -1069,7 +1069,7 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
         removePieceFromBoard(from, colorOfPiece(lastPiece),
                              typeOfPiece(lastPiece));
         
-        genMovesToSquare(combos, num, lastMove.getFrom1());
+        num += genMovesToSquare(combos, lastMove.getFrom1());
 
         writePieceOnBoard(from, colorOfPiece(lastPiece),
                              typeOfPiece(lastPiece));
@@ -1080,7 +1080,7 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
                              colorOfPiece(lastMove.getPiece2()),
                              typeOfPiece(lastMove.getPiece2()));
         
-        genMovesToSquare(combos, num, lastMove.getFrom2());
+        num += genMovesToSquare(combos, lastMove.getFrom2());
 
         writePieceOnBoard(lastMove.getFrom1(), 
                           colorOfPiece(lastMove.getPiece2()),
@@ -1092,15 +1092,17 @@ unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
 
 //////////////////////////////////////////////////////////////////////////////
 //Generates all moves for a specified piece being on a specified square. 
-//Writes all the moves in the array given, starting at the index designated
-//by the variable num, and then updates the num variable as it writes moves
+//Returns the number of moves generated and appends all moves generated to
+//the end of the list given.
 //////////////////////////////////////////////////////////////////////////////
-void Board :: genMovesForPiece(vector<StepCombo>& combos, unsigned int& num,
+unsigned int Board :: genMovesForPiece(list<StepCombo>& combos,
                                unsigned char piece, unsigned char square)
 {
+    unsigned int num = 0;
+
     if (isFrozen(square, piece) || colorOfPiece(piece) != sideToMove
       || stepsLeft < 1)
-        return;
+        return 0;
 
     Int64 allPieces = getAllPieces();
     
@@ -1133,7 +1135,8 @@ void Board :: genMovesForPiece(vector<StepCombo>& combos, unsigned int& num,
             prefix.addStep(captureStep);
 
         //Add the 1 step to the generated moves and increment the count
-        combos[num++] = prefix;
+        combos.push_back(prefix);
+        num++;
 
         //Try to extend the 1 steps to pulls, by finding lower ranking 
         //neighbors and moving them to the spot this piece moved from
@@ -1162,7 +1165,8 @@ void Board :: genMovesForPiece(vector<StepCombo>& combos, unsigned int& num,
                     pull.addStep(captureStep);
 
                 //Add the pull to the generated moves
-                combos[num++] = pull;
+                combos.push_back(pull);
+                ++num;
             }
 
             //Undo the first part
@@ -1216,26 +1220,30 @@ void Board :: genMovesForPiece(vector<StepCombo>& combos, unsigned int& num,
                     push.addStep(captureStep);     
 
                 //Add the push      
-                combos[num++] = push;
+                combos.push_back(push);
+                ++num;
 
                 //Undo the first part
                 undoCombo(prefix);       
             }        
         }
     }
+
+    return num;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 //Generates all moves that involved the first moving piece moving to the
-//specified square. Writes all the moves in the array given, starting at the 
-//index designated by the variable num, and then updates the num variable as 
-//it writes moves
+//specified square. Returns the number of moves generated and appends all
+//moves generated to the end of the list given.
 //////////////////////////////////////////////////////////////////////////////
-void Board :: genMovesToSquare(vector<StepCombo>& combos, unsigned int& num,
+unsigned int Board :: genMovesToSquare(list<StepCombo>& combos, 
                                unsigned char to)
 {
+    unsigned int num = 0;
+
     if (stepsLeft < 1)  
-        return;
+        return 0;
 
     //Find all neighbors on the side to move
     Int64 movers = getAllPiecesOfColor(sideToMove)
@@ -1267,7 +1275,8 @@ void Board :: genMovesToSquare(vector<StepCombo>& combos, unsigned int& num,
             prefix.addStep(captureStep);
 
         //Add the 1 step to the generated moves and increment the count
-        combos[num++] = prefix;
+        combos.push_back(prefix);
+        ++num;
 
         //Try to extend the 1 steps to pulls, by finding lower ranking 
         //neighbors and moving them to the spot this piece moved from
@@ -1296,13 +1305,16 @@ void Board :: genMovesToSquare(vector<StepCombo>& combos, unsigned int& num,
                     pull.addStep(captureStep);
 
                 //Add the pull to the generated moves
-                combos[num++] = pull;
+                combos.push_back(pull);
+                ++num;
             }
 
             //Undo the first part
             undoCombo(prefix);
         }   
     }
+
+    return num;
 }
     
 //////////////////////////////////////////////////////////////////////////////

@@ -146,13 +146,13 @@ int main(int argc, char * args[])
                 positionFile = args[i+1];
                 board.loadPositionFile(positionFile);
 
-                vector<StepCombo> combos;
-                combos.resize(SEARCH_MAX_COMBOS_PER_PLY);
-                int num = board.genMoves(combos);
+                list<StepCombo> combos;
+                board.genMoves(combos);
                 cout << "Generated these moves:\n";
-                for (int i = 0; i < num; i++)
+                for (list<StepCombo> :: iterator j = combos.begin(); 
+                     j != combos.end(); j++)
                 {
-                    cout << combos[i].toString() << endl;
+                    cout << j -> toString() << endl;
                 }
             }
             else if (string(args[i]) == string("--eval"))

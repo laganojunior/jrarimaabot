@@ -160,7 +160,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     }
 
     //list of moves to try before generating all the moves
-    vector<StepCombo> preGenSteps;
+    list<StepCombo> preGenSteps;
 
     //check if there is a hash position of at least this depth
     if (transTable.hasValidEntry(board.hash))
@@ -251,9 +251,10 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             {
                 //Make sure the move isn't already in the pre gen list
                 bool alreadyIn = false;
-                for (int j = 0; j < preGenSteps.size(); j++)
+                for (list<StepCombo>::iterator j = preGenSteps.begin(); 
+                     j != preGenSteps.end(); j++)
                 {
-                    if (preGenSteps[j] == killerCombo)
+                    if (*j == killerCombo)
                     {
                         alreadyIn = true;
                         break;
@@ -272,9 +273,10 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             {
                 //Make sure the move isn't already in the pre gen list
                 bool alreadyIn = false;
-                for (int j = 0; j < preGenSteps.size(); j++)
+                for (list<StepCombo>::iterator j = preGenSteps.begin(); 
+                     j != preGenSteps.end(); j++)
                 {
-                    if (preGenSteps[j] == killerCombo)
+                    if (*j == killerCombo)
                     {
                         alreadyIn = true;
                         break;
@@ -291,11 +293,12 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     //if there are any pre-gen steps, explore them first
     if (preGenSteps.size() > 0) 
     {
-        bestCombo = preGenSteps[0];
+        bestCombo = preGenSteps.front();
 
-        for (int i = 0; i < preGenSteps.size(); i++)
+        for (list<StepCombo>::iterator iter = preGenSteps.begin();  
+             iter != preGenSteps.end(); iter++)
         {
-            StepCombo next = preGenSteps[i];
+            StepCombo next = *iter;
 
             short nodeScore = doMoveAndSearch(board, depth, ply, alpha, 
                                               beta, nodePV, next,
@@ -328,12 +331,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     //Check to make sure the combo arrays has entries up to this ply
     if ((int)combos.size() - 1 < (int)ply)
     {
-        while (combos.size() != ply + 1)
-        {
-            vector<StepCombo> vec;
-            combos.push_back(vec);
-            combos[combos.size() - 1].resize(SEARCH_MAX_COMBOS_PER_PLY);
-        }
+        combos.resize(ply + 1);
     }
 
     //If no cutoff was caused by the pre generation steps, generate the
@@ -354,10 +352,12 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     unsigned int numCombos; 
     if ((ply % 4 == 1 || genDependent) && lastMove.numSteps > 0)
     {
+        combos[ply].clear();
         numCombos = board.genDependentMoves(combos[ply], lastMove);
     }
     else
     {
+        combos[ply].clear();
         numCombos = board.genMoves(combos[ply]);
     }
         
@@ -367,35 +367,36 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         return alpha;
     }
 
-    //if there were no pre gen steps, set the first best move now
-    if (preGenSteps.size() == 0)
+    //Remove the pre gens from the current list of moves
+    for (list<StepCombo>::iterator i = preGenSteps.begin();  
+             i != preGenSteps.end(); i++)
     {
-        bestCombo = combos[ply][0];
-    }
-
-    //score the combos for sorting
-    eval.scoreCombos(combos[ply], numCombos, board.sideToMove); 
-
-    //play each step, and explore each subtree
-    for (int i = 0; i < numCombos; i++)
-    {
-        //get the next combo to look at.
-        StepCombo next = getNextBestComboAndRemove(combos[ply], numCombos);
-
-        //Check if this combo is in the pre gen list, if so, just don't
-        //research it
-        bool redo = false;
-        for (int j = 0; j < preGenSteps.size(); j++)
+        for (list<StepCombo>::iterator j = combos[ply].begin();
+             j != combos[ply].end(); j++)
         {
-            if (next == preGenSteps[j])
+            if (*i == *j)
             {
-                redo = true;
+                combos[ply].erase(j);
+                numCombos--;
                 break;
             }
         }
+    }
 
-        if (redo)
-            continue;
+    //if there were no pre gen steps, set the first best move now
+    if (preGenSteps.size() == 0)
+    {
+        bestCombo = combos[ply].front();
+    }
+
+    //score the combos for sorting
+    eval.scoreCombos(combos[ply], board.sideToMove); 
+
+    //play each step, and explore each subtree
+    while (!combos[ply].empty())
+    {
+        //get the next combo to look at.
+        StepCombo next = getNextBestComboAndRemove(combos[ply]);
 
         //explore the subtree for this move.
 
@@ -768,28 +769,28 @@ void Search :: loadMoveFile(string filename, Board board)
 
 //////////////////////////////////////////////////////////////////////////////
 //Returns the next best combo from the list
-//according to the scores for each one and sets the score for that one 
-//sufficiently low to remove it from consideration next time this is called
+//according to the scores for each one and removes that combo from the list
 //////////////////////////////////////////////////////////////////////////////
-StepCombo Search :: getNextBestComboAndRemove(vector<StepCombo>& list, 
-                                              unsigned int num)
+StepCombo Search :: getNextBestComboAndRemove(list<StepCombo>& combos)
 {
-    short bestScore = list[0].score;   
-    unsigned int bestIndex = 0;
+    short bestScore = combos.front().score;   
+    list<StepCombo> :: iterator bestIter = combos.begin();
+    StepCombo bestCombo = combos.front();
 
     //search for the best score
-    for (int i = 1; i < num; ++i)
+    for (list<StepCombo> :: iterator i = combos.begin(); 
+         i != combos.end(); ++i)
     {
-        if (list[i].score > bestScore)
+        if (i->score > bestScore)
         {
-            bestScore = list[i].score;
-            bestIndex = i;
+            bestScore = i->score;
+            bestIter = i;
+            bestCombo = *i;
         }
     }
 
-    //remove this combo from future consideration by setting its score
-    //very low
-    list[bestIndex].score = -30000;
-    
-    return list[bestIndex];
-}
+    //remove the best combo
+    combos.erase(bestIter);
+
+    return bestCombo;
+} 
