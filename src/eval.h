@@ -5,6 +5,7 @@
 #include "defines.h"
 #include "step.h"
 #include "hash.h"
+#include "historyscore.h"
 #include <vector>
 
 //functions and structures used for scoring heurisitics
@@ -24,6 +25,8 @@ class Eval
     bool isWin(Board& board, unsigned char color);
 
     void scoreCombos(vector<StepCombo>& combos, int num, unsigned char color);
+
+    HistoryScoreTable histTable;
 };
 
 #endif

@@ -316,6 +316,9 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                     //increase killer score
                     killerTable.addKillerMove(ply, next.getRawMove());
 
+                    //increase history score
+                    eval.histTable.increaseScore(next.getRawMove(), 
+                                                 board.sideToMove, depth);
                     return beta;
                 }
             }
@@ -415,6 +418,9 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                 //increase killer score
                 killerTable.addKillerMove(ply, next.getRawMove());
 
+                //increase history score
+                eval.histTable.increaseScore(next.getRawMove(), 
+                                             board.sideToMove, depth);
                 return beta;
             }
         }
@@ -433,6 +439,10 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         //alpha is actually an exact value of the score
         transTable.setEntry(board.hash, TRANSPOSITION_SCORETYPE_EXACT, alpha, 
                             depth, bestCombo.getRawMove());
+        
+        //increase history score
+        eval.histTable.increaseScore(bestCombo.getRawMove(), board.sideToMove, 
+                                     depth);
     }
         
     return alpha;
@@ -502,7 +512,11 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         //Check if the position is now a win for the player that just moved
         if (eval.isWin(board, board.sideToMove))
         {
-            board.undoCombo(combo);            
+            board.undoCombo(combo);  
+
+            nodePV.resize(0);
+            nodePV.insert(nodePV.begin(),
+                          combo.toString());           
             return beta;
         }
             

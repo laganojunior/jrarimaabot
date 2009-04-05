@@ -3,12 +3,11 @@
 #include "int64.h"
 
 //////////////////////////////////////////////////////////////////////////////
-//Clear all stored data from a previous search such as killer move data
-//and history score data
+//Clear all stored data from a previous search such as history score data.
 //////////////////////////////////////////////////////////////////////////////
 void Eval :: reset()
 {
-
+    histTable.reset();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -146,21 +145,29 @@ void Eval :: scoreCombos(vector<StepCombo>& combos, int num,
         //numerically ordered with ELEPHANT being 0, and RABBIT being 5, so
         //to give a sensical score in respect to type, value should reversed
         //in respect to these numbers
-        for (int j = 0; j < combos[i].numSteps; j++)
-        {   
-            if (combos[i].steps[j].isCapture())
-            {
-                if (colorOfPiece(combos[i].steps[j].getPiece()) == color)
-                    combos[i].score -= 1000 * 
-                    (MAX_TYPES - typeOfPiece(combos[i].steps[j].getPiece()));
-                else
-                    combos[i].score += 1000 * 
-                    (MAX_TYPES - typeOfPiece(combos[i].steps[j].getPiece()));
-            } 
+        if (combos[i].piece1IsCaptured())
+        {
+            unsigned char piece = combos[i].getPiece1();
+            if (colorOfPiece(piece) != color)
+                combos[i].score += 100 * (MAX_TYPES - typeOfPiece(piece));
+            else
+                combos[i].score -= 100 * (MAX_TYPES - typeOfPiece(piece));
+        }
+        
+        if (combos[i].piece2IsCaptured())
+        {
+            unsigned char piece = combos[i].getPiece2();
+            if (colorOfPiece(piece) != color)
+                combos[i].score += 100 * (MAX_TYPES - typeOfPiece(piece));
+            else
+                combos[i].score -= 100 * (MAX_TYPES - typeOfPiece(piece));
         }
 
         //give moves some score based on push/pulling moves
         if (combos[i].stepCost > 1 && combos[i].getFrom1() != ILLEGAL_SQUARE)
-            combos[i].score += 250;
+            combos[i].score += 25;
+
+        //give moves a boost according to their history score
+        combos[i].score += histTable.getScore(combos[i].getRawMove(), color);
     }
 }
