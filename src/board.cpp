@@ -922,9 +922,11 @@ unsigned int Board :: genMoves(list<StepCombo>& combos)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Generates the moves that are dependent on the last move having been played.
+//Generates the moves that are dependent on the last move having been played
+//or can be rendered more effective because the last move was played.
 //That is, this generates all moves that were not available before the last
-//move was played but are now available after it was played. Returns the
+//move was played but are now available after it was played and the moves
+//that get a piece next to the piece last moved. Returns the
 //number of moves generated and appends the move generated to the list given
 //////////////////////////////////////////////////////////////////////////////
 unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
@@ -935,9 +937,6 @@ unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
     if (stepsLeft < 1)
         return 0;
 
-    //Generate all moves that the piece last moved (or the friendly piece
-    //last moved if the last move was a push or pull), as clearly these moves
-    //are dependent on the last move.
     unsigned char lastPiece;
     unsigned char from;
 
@@ -946,8 +945,6 @@ unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
     {
         lastPiece = lastMove.getPiece1();
         from      = lastMove.getTo1();
-        if (lastMove.piece1IsCaptured())
-            return 0;
     }
     else
     {
@@ -955,51 +952,32 @@ unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
         //Note the second piece always moves to the location the first
         //piece moves from, so the second piece is now there.
         from      = lastMove.getFrom1();
-        if (lastMove.piece2IsCaptured())
-            return 0;
     }
-    
-    num += genMovesForPiece(combos, lastPiece, from);
 
-    //Note that the above line will generate the move that exactly
-    //counteracts the last move played. Clearly this is undesirable, so go
-    //through the generated list and remove that move
+    //Make the move that has the same from1, to1, and from2 that would
+    //reverse the move that was just played. Note that this move may not
+    //be legal (i.e. the piece last moved might now be frozen and this
+    //doesn't generate captures or the right push/pulls), but the
+    //key thing is that it has the same characteristic squares
+    StepCombo reverse;
     if (lastMove.stepCost < 2)
     {
-        for (list<StepCombo> :: iterator iter = combos.begin(); 
-             iter != combos.end(); iter++)
-        {
-            if (lastMove.getFrom1() == iter->getTo1() &&
-                lastMove.getTo1() == iter->getFrom1())
-            {
-                combos.erase(iter);
-                num--;
-                break;
-            }
-        }
+        reverse.stepCost = 1;
+        reverse.steps[0].genMove(lastPiece, lastMove.getTo1(),
+                                            lastMove.getFrom1());
     }
     else
     {
-        for (list<StepCombo> :: iterator iter = combos.begin(); 
-             iter != combos.end(); iter++)
-        {
-            if (lastMove.getFrom1() == iter->getFrom1() &&
-                lastMove.getTo1() == iter->getFrom2()   &&
-                lastMove.getFrom2() == iter->getTo1())
-            {
-                combos.erase(iter);
-                num--;
-                break;
-            }
-        }
+        reverse.stepCost = 2;
+        reverse.steps[0].genMove(lastPiece, lastMove.getFrom1(),
+                                            lastMove.getFrom2());
+        reverse.steps[1].genMove(lastPiece, lastMove.getTo1(),
+                                            lastMove.getFrom1());
     }
 
-    //Generate all moves from pieces that the last piece unfroze
+    //Generate all moves from pieces that the last piece moved next to
 
-    //Check for each friendly neighbor, and see if they were frozen 
-    //before hand. This is true if that neighbor only has 1 friendly neighbor
-    //(which is then just the last piece) and thus was frozen before the
-    //piece moved.
+    //Check for each friendly neighbor
     Int64 friendNeighbors = getAllPiecesOfColor(sideToMove)
                           & getNeighbors(from);
 
@@ -1015,9 +993,10 @@ unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
         Int64 friendsNear = getAllPiecesOfColor(sideToMove)
                           & getNeighbors(friendSquare);
 
-        if (enemiesNear && numBits(friendsNear) == 1)
+        if (!enemiesNear || numBits(friendsNear))
         {
-            num += genMovesForPiece(combos, friendPiece, friendSquare);
+            num += genMovesForPiece(combos, friendPiece, friendSquare,
+                                    reverse);
         }
     }
 
@@ -1055,48 +1034,36 @@ unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
 
             if (!isFrozen(friendSquare, friendPiece))
             {
-                num += genMovesForPiece(combos, friendPiece, friendSquare);
+                num += genMovesForPiece(combos, friendPiece, friendSquare,
+                                        reverse);
             }
         }
     }
 
-    //Generate all moves that has pieces moving to the vacated square, 
-    //which in the case for a single step is from1, but for a push or pull
-    //is from2. To prevent the piece that used to be there from moving back,
-    //remove that piece temporarily
-    if (lastMove.stepCost < 2)
+    //Generate all moves that has pieces moving next to the friendly piece
+    //last moved
+    Int64 neighbors = getNeighbors(from);
+    int pos;
+    while ((pos = bitScanForward(neighbors)) != NO_BIT_FOUND)
     {
-        removePieceFromBoard(from, colorOfPiece(lastPiece),
-                             typeOfPiece(lastPiece));
+        neighbors ^= Int64FromIndex(pos);
         
-        num += genMovesToSquare(combos, lastMove.getFrom1());
-
-        writePieceOnBoard(from, colorOfPiece(lastPiece),
-                             typeOfPiece(lastPiece));
-    }
-    else
-    {
-        removePieceFromBoard(lastMove.getFrom1(), 
-                             colorOfPiece(lastMove.getPiece2()),
-                             typeOfPiece(lastMove.getPiece2()));
-        
-        num += genMovesToSquare(combos, lastMove.getFrom2());
-
-        writePieceOnBoard(lastMove.getFrom1(), 
-                          colorOfPiece(lastMove.getPiece2()),
-                          typeOfPiece(lastMove.getPiece2()));
+        num += genMovesToSquare(combos, pos, reverse);
     }
 
     return num;
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Generates all moves for a specified piece being on a specified square. 
+//Generates all moves for a specified piece being on a specified square
+//except for any move that has the same from1, to1, and from2 as the
+//ignoreMove.
 //Returns the number of moves generated and appends all moves generated to
 //the end of the list given.
 //////////////////////////////////////////////////////////////////////////////
 unsigned int Board :: genMovesForPiece(list<StepCombo>& combos,
-                               unsigned char piece, unsigned char square)
+                               unsigned char piece, unsigned char square,
+                               StepCombo& ignoreMove)
 {
     unsigned int num = 0;
 
@@ -1229,88 +1196,183 @@ unsigned int Board :: genMovesForPiece(list<StepCombo>& combos,
         }
     }
 
+    //Remove the ignore move
+    for (list<StepCombo> :: iterator i = combos.begin();
+         i != combos.end(); i++)
+    {
+        if (i->getFrom1() == ignoreMove.getFrom1() && 
+            i->getFrom2() == ignoreMove.getFrom2() &&
+            i->getTo1()   == ignoreMove.getTo1())
+        {
+            combos.erase(i++);
+            i--;
+            num--;
+        }   
+    }
+
     return num;
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Generates all moves that involved the first moving piece moving to the
-//specified square. Returns the number of moves generated and appends all
+//Generates all moves that involves a friendly piece moving to the
+//specified square except for any move that has the same from1, to1, from2
+//as the ignoreMove. Returns the number of moves generated and appends all
 //moves generated to the end of the list given.
 //////////////////////////////////////////////////////////////////////////////
 unsigned int Board :: genMovesToSquare(list<StepCombo>& combos, 
-                               unsigned char to)
+                               unsigned char to, StepCombo& ignoreMove)
 {
     unsigned int num = 0;
 
     if (stepsLeft < 1)  
         return 0;
 
-    //Find all neighbors on the side to move
-    Int64 movers = getAllPiecesOfColor(sideToMove)
-                 & getNeighbors(to);
-
-    int from;
-    while ((from = bitScanForward(movers)) != NO_BIT_FOUND)
+    //Generate vacant square moves if the square is not already occupied,
+    //These are 1-steps and pulls
+    if (!(getAllPieces() & Int64FromIndex(to)))
     {
-        movers ^= Int64FromIndex(from);
-        unsigned char piece = getPieceAt(from);
+        //Find all neighbors on the side to move
+        Int64 movers = getAllPiecesOfColor(sideToMove)
+                     & getNeighbors(to);
 
-        if (isFrozen(from, piece))
-            continue;
-
-        //Make sure a rabbit isn't moving backward
-        if (typeOfPiece(piece) == RABBIT &&
-            ((from - to == 8 && sideToMove == SILVER) ||
-            (to - from == 8 && sideToMove == GOLD)))
-            continue;
- 
-        //generate the 1 step
-        Step step, captureStep;
-        StepCombo prefix;
-        
-        step.genMove(piece, from, to);
-        prefix.addStep(step);
-
-        if (moveLeadsToCapture(step, captureStep))
-            prefix.addStep(captureStep);
-
-        //Add the 1 step to the generated moves and increment the count
-        combos.push_back(prefix);
-        ++num;
-
-        //Try to extend the 1 steps to pulls, by finding lower ranking 
-        //neighbors and moving them to the spot this piece moved from
-        if (stepsLeft > 1)
+        int from;
+        while ((from = bitScanForward(movers)) != NO_BIT_FOUND)
         {
-            //temporarily make the first part of the pull so that 
-            //captures can be detected easily on the second part
-            playCombo(prefix);
+            movers ^= Int64FromIndex(from);
+            unsigned char piece = getPieceAt(from);
 
-            Int64 lowNeighbors = getAllPiecesLower(typeOfPiece(piece))
-                             & getAllPiecesOfColor(oppColorOf(sideToMove))
-                               & getNeighbors(from);
+            if (isFrozen(from, piece))
+                continue;
+
+            //Make sure a rabbit isn't moving backward
+            if (typeOfPiece(piece) == RABBIT &&
+                ((from - to == 8 && sideToMove == SILVER) ||
+                (to - from == 8 && sideToMove == GOLD)))
+                continue;
+     
+            //generate the 1 step
+            Step step, captureStep;
+            StepCombo prefix;
             
-            int lowFrom;
-            while ((lowFrom = bitScanForward(lowNeighbors))
-                    != NO_BIT_FOUND)
+            step.genMove(piece, from, to);
+            prefix.addStep(step);
+
+            if (moveLeadsToCapture(step, captureStep))
+                prefix.addStep(captureStep);
+
+            //Add the 1 step to the generated moves and increment the count
+            combos.push_back(prefix);
+            ++num;
+
+            //Try to extend the 1 steps to pulls, by finding lower ranking 
+            //neighbors and moving them to the spot this piece moved from
+            if (stepsLeft > 1)
             {
-                lowNeighbors ^= Int64FromIndex(lowFrom);
+                //temporarily make the first part of the pull so that 
+                //captures can be detected easily on the second part
+                playCombo(prefix);
 
-                //Generate the full pull move
-                StepCombo pull = prefix;
-                step.genMove(getPieceAt(lowFrom), lowFrom, from);
-                pull.addStep(step);
+                Int64 lowNeighbors = getAllPiecesLower(typeOfPiece(piece))
+                                 & getAllPiecesOfColor(oppColorOf(sideToMove))
+                                   & getNeighbors(from);
+                
+                int lowFrom;
+                while ((lowFrom = bitScanForward(lowNeighbors))
+                        != NO_BIT_FOUND)
+                {
+                    lowNeighbors ^= Int64FromIndex(lowFrom);
 
+                    //Generate the full pull move
+                    StepCombo pull = prefix;
+                    step.genMove(getPieceAt(lowFrom), lowFrom, from);
+                    pull.addStep(step);
+
+                    if (moveLeadsToCapture(step, captureStep))
+                        pull.addStep(captureStep);
+
+                    //Add the pull to the generated moves
+                    combos.push_back(pull);
+                    ++num;
+                }
+
+                //Undo the first part
+                undoCombo(prefix);
+            }   
+        }
+    }
+    else if ((getAllPiecesOfColor(oppColorOf(sideToMove)) 
+             & Int64FromIndex(to)) && stepsLeft > 1)
+    {
+        //If the square is not vacant but instead occupied by an enemy piece,
+        //try to generate pushes for a friendly piece to get there
+        unsigned char enemyPiece = getPieceAt(to);
+        unsigned char enemyType  = typeOfPiece(enemyPiece);
+
+        Int64 pushers = getAllPiecesThatOutrank(enemyType)
+                      & getAllPiecesOfColor(sideToMove)
+                      & getNeighbors(to);
+
+        int pushFrom;
+        while ((pushFrom = bitScanForward(pushers)) != NO_BIT_FOUND)
+        {
+            pushers ^= Int64FromIndex(pushFrom);
+
+            unsigned char pusher = getPieceAt(pushFrom);
+
+            //make sure piece isn't frozen
+            if (isFrozen(pushFrom, pusher))
+                continue;
+
+
+            Int64 freePushTo = getNeighbors(to) & ~getAllPieces();
+
+            int pushTo;
+            while ((pushTo = bitScanForward(freePushTo)) != NO_BIT_FOUND)
+            {
+                freePushTo ^= Int64FromIndex(pushTo);
+
+                //Generate the first part of the push
+                StepCombo prefix;
+                Step step, captureStep;
+                
+                step.genMove(enemyPiece, to, pushTo);
+                prefix.addStep(step);
                 if (moveLeadsToCapture(step, captureStep))
-                    pull.addStep(captureStep);
+                    prefix.addStep(captureStep);
 
-                //Add the pull to the generated moves
-                combos.push_back(pull);
+                //Temporarily play the first part to detect captures
+                //when playing the second.
+                playCombo(prefix);
+
+                //Generate the full push
+                StepCombo push = prefix;
+
+                step.genMove(pusher, pushFrom, to);
+                push.addStep(step);
+                if (moveLeadsToCapture(step, captureStep))
+                    push.addStep(captureStep);     
+
+                //Add the push      
+                combos.push_back(push);
                 ++num;
-            }
 
-            //Undo the first part
-            undoCombo(prefix);
+                //Undo the first part
+                undoCombo(prefix);  
+            }
+        }
+    }
+
+    //Remove the ignore move
+    for (list<StepCombo> :: iterator i = combos.begin();
+         i != combos.end(); i++)
+    {
+        if (i->getFrom1() == ignoreMove.getFrom1() && 
+            i->getFrom2() == ignoreMove.getFrom2() &&
+            i->getTo1()   == ignoreMove.getTo1())
+        {
+            combos.erase(i);
+            num--;
+            break;
         }   
     }
 

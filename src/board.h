@@ -54,8 +54,10 @@ class Board
     unsigned int genDependentMoves(list<StepCombo>& combos,
                                    StepCombo& lastMove);
     unsigned int genMovesForPiece(list<StepCombo>& combos, 
-                                  unsigned char piece, unsigned char square);
-    unsigned int genMovesToSquare(list<StepCombo>& combos, unsigned char to);
+                                  unsigned char piece, unsigned char square,
+                                  StepCombo& ignoreMove);
+    unsigned int genMovesToSquare(list<StepCombo>& combos, unsigned char to,
+                                  StepCombo& ignoreMove);
     bool gen1Step(StepCombo& combo, unsigned char from, unsigned char to);
     bool gen2Step(StepCombo& combo, unsigned char from1, unsigned char to1,
                                     unsigned char from2);

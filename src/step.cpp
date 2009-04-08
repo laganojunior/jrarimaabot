@@ -328,7 +328,8 @@ bool StepCombo :: piece1IsCaptured()
     if (numSteps < 2)
         return false;
 
-    return steps[1].isCapture();
+    return steps[1].isCapture()  
+       && (steps[0].getPiece() == steps[1].getPiece());
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -349,7 +350,9 @@ bool StepCombo :: piece2IsCaptured()
     if (numSteps < secondMoveIndex + 2)
         return false;
 
-    return steps[secondMoveIndex].getPiece();
+    return steps[secondMoveIndex+1].isCapture() && 
+           (steps[secondMoveIndex].getPiece() 
+            == steps[secondMoveIndex+1].getPiece());
 }
 
 //////////////////////////////////////////////////////////////////////////////
