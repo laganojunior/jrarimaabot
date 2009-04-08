@@ -47,7 +47,6 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
     
     eval.reset();
     killerTable.reset();
-    gameHistTable.reset();
     transTable.reset();
     searchHistTables.resize(1);
     searchHistTables[0].setHashKeySize(SEARCH_HIST_HASH_BITS);

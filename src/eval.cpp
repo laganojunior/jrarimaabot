@@ -1,6 +1,12 @@
 #include "eval.h"
 #include "board.h"
 #include "int64.h"
+#include "error.h"
+#include <fstream>
+#include <list>
+#include <string>
+
+using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
 //Clear all stored data from a previous search such as history score data.
@@ -19,99 +25,47 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     //do scores assuming GOLD's perspective. if it is SILVER that is really
     //desired, then just negate at the end as this is a zero sum game
 
-    int score;
+    short score;
     
     //material
-    int material = __builtin_popcountll(board.pieces[GOLD][ELEPHANT]) * 1200
-                 + __builtin_popcountll(board.pieces[GOLD][CAMEL]) * 700 
-                 + __builtin_popcountll(board.pieces[GOLD][HORSE]) * 500 
-                 + __builtin_popcountll(board.pieces[GOLD][DOG]) * 300 
-                 + __builtin_popcountll(board.pieces[GOLD][CAT]) * 200
-                 + __builtin_popcountll(board.pieces[GOLD][RABBIT]) * 100
-                 - __builtin_popcountll(board.pieces[SILVER][ELEPHANT]) * 1200
-                 - __builtin_popcountll(board.pieces[SILVER][CAMEL]) * 700 
-                 - __builtin_popcountll(board.pieces[SILVER][HORSE]) * 500 
-                 - __builtin_popcountll(board.pieces[SILVER][DOG]) * 300 
-                 - __builtin_popcountll(board.pieces[SILVER][CAT]) * 200
-                 - __builtin_popcountll(board.pieces[SILVER][RABBIT]) * 100;
+    short materialScore =    numBits(board.pieces[GOLD][ELEPHANT]) * 1200
+                           + numBits(board.pieces[GOLD][CAMEL]) * 700 
+                           + numBits(board.pieces[GOLD][HORSE]) * 500 
+                           + numBits(board.pieces[GOLD][DOG]) * 300 
+                           + numBits(board.pieces[GOLD][CAT]) * 200
+                           + numBits(board.pieces[GOLD][RABBIT]) * 100
+                           - numBits(board.pieces[SILVER][ELEPHANT]) * 1200
+                           - numBits(board.pieces[SILVER][CAMEL]) * 700 
+                           - numBits(board.pieces[SILVER][HORSE]) * 500 
+                           - numBits(board.pieces[SILVER][DOG]) * 300 
+                           - numBits(board.pieces[SILVER][CAT]) * 200
+                           - numBits(board.pieces[SILVER][RABBIT]) * 100;
 
-    //rabbit advancement
-    int advance = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(0)) * 25000
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(1)) * 50
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(2)) * 40
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(3)) * 20
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(4)) * 15
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(5)) * 10
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(6)) * 5
-                + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getRow(7)) * 20
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(7)) * 25000
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(6)) * 50
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(5)) * 40
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(4)) * 20
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(3)) * 15
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(2)) * 10
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(1)) * 5
-                - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getRow(0)) * 20;
+    //scores for static positions
+    short positionScore = 0;
 
-    //keeps center control with the strong board.pieces
-    int strongCenter = __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(0)) * 25
-                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(1)) * 15
-                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(2)) * 10
-                     + __builtin_popcountll(board.pieces[GOLD][ELEPHANT] & getCenterRing(3)) * 0
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(0)) * 10
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(1)) * 10
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(2)) * 0
-                     + __builtin_popcountll(board.pieces[GOLD][CAMEL] & getCenterRing(3)) * -20
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(0)) * 5
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(1)) * 4
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(2)) * 3
-                     + __builtin_popcountll(board.pieces[GOLD][HORSE] & getCenterRing(3)) * 3
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(0)) * 25
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(1)) * 15
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(2)) * 10
-                     - __builtin_popcountll(board.pieces[SILVER][ELEPHANT] & getCenterRing(3)) * 0
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(0)) * 10
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(1)) * 10
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(2)) * 0
-                     - __builtin_popcountll(board.pieces[SILVER][CAMEL] & getCenterRing(3)) * -20
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(0)) * 5
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(1)) * 4
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(2)) * 3
-                     - __builtin_popcountll(board.pieces[SILVER][HORSE] & getCenterRing(3)) * 3;
+    for (int pieceColor = 0; pieceColor < MAX_COLORS; ++pieceColor)
+    {
+        for (int type = 0; type < MAX_TYPES; ++type)
+        {
+            Int64 b = board.pieces[pieceColor][type];
+            int pos;
 
-    //keep rabbits away from center 
-    int rabbitCenterAvoid = __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(0)) * -10
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(1)) * -5
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(2)) * -3
-                          + __builtin_popcountll(board.pieces[GOLD][RABBIT] & getCenterRing(3)) * 10
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(0)) * -10
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(1)) * -5
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(2)) * -3
-                          - __builtin_popcountll(board.pieces[SILVER][RABBIT] & getCenterRing(3)) * 10;
+            //Go through all squares where this particular piece is
+            while ((pos = bitScanForward(b)) != NO_BIT_FOUND)
+            {
+                b ^= Int64FromIndex(pos);
+                
+                //modify the score accordingly
+                if (pieceColor == GOLD)
+                    positionScore += posWeights[GOLD][type][pos];
+                else
+                    positionScore -= posWeights[SILVER][type][pos];
+            }
+        }
+    }
 
-    //keep pieces away from traps
-    int trapAvoid = __builtin_popcountll(board.pieces[GOLD][CAMEL] & (getTraps() | getTrapNeighbors()))    * -20
-                  + __builtin_popcountll(board.pieces[GOLD][HORSE] & (getTraps() | getTrapNeighbors()))    * -10
-                  + __builtin_popcountll(board.pieces[GOLD][DOG] & (getTraps() | getTrapNeighbors()))      * -5
-                  + __builtin_popcountll(board.pieces[GOLD][CAT] & (getTraps() | getTrapNeighbors()))      * -3
-                  + __builtin_popcountll(board.pieces[GOLD][RABBIT] & (getTraps() | getTrapNeighbors()))   * -5
-                  - __builtin_popcountll(board.pieces[SILVER][CAMEL] & (getTraps() | getTrapNeighbors()))  * -20 
-                  - __builtin_popcountll(board.pieces[SILVER][HORSE] & (getTraps() | getTrapNeighbors()))  * -10
-                  - __builtin_popcountll(board.pieces[SILVER][DOG] & (getTraps() | getTrapNeighbors()))    * -5
-                  - __builtin_popcountll(board.pieces[SILVER][CAT] & (getTraps() | getTrapNeighbors()))    * -3
-                  - __builtin_popcountll(board.pieces[SILVER][RABBIT] & (getTraps() | getTrapNeighbors())) * -5;
-
-    //guard local traps with weaker pieces
-    int trapGuard = __builtin_popcountll(board.pieces[GOLD][DOG] & (getTrapNeighbors()) & 
-                      (getRow(5) | getRow(6) | getRow(7) )) * 20
-                  + __builtin_popcountll(board.pieces[GOLD][CAT] & (getTrapNeighbors()) & 
-                      (getRow(5) | getRow(6) | getRow(7) )) * 10
-                  - __builtin_popcountll(board.pieces[SILVER][DOG] & (getTrapNeighbors()) & 
-                      (getRow(1) | getRow(2) | getRow(3) )) * 20
-                  - __builtin_popcountll(board.pieces[SILVER][CAT] & (getTrapNeighbors()) & 
-                      (getRow(1) | getRow(2) | getRow(3) )) * 10;
-
-    score = material + advance + strongCenter + rabbitCenterAvoid + trapAvoid + trapGuard;
+    score = materialScore + positionScore;
 
     if (color == GOLD)
         return score;
@@ -171,3 +125,87 @@ void Eval :: scoreCombos(list<StepCombo>& combos, unsigned char color)
         i->score += histTable.getScore(i->getRawMove(), color);
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//Loads all weight files
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: loadWeights()
+{
+    loadPositionWeights("evalWeights/positionWeights.txt");
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Load position weights from the specified file
+//////////////////////////////////////////////////////////////////////////////
+void Eval :: loadPositionWeights(string filename)
+{
+    ifstream fin(filename.c_str());
+
+    if (!fin.is_open())
+    {
+        Error error;
+        error << "From Eval :: loadPositionWeights\n";
+        error << "Couldn't open file " << filename << "\n";
+        throw error;
+    }
+
+    //Load the weights from the file, which are all in gold's perspective,
+    //and only describe the left hand side of the board.
+    for (int type = 0; type < MAX_TYPES; type++)
+    {
+        //Read in the values
+        for (int row = 0; row < 8; row++)
+        {
+            string line;
+            getline(fin, line);
+            stringstream lineStream(line);
+            
+            for (int col = 0; col < 4; col++)
+            {
+                short weight;
+                lineStream >> weight;
+
+                //write two values for gold, one for each side of the board.
+                posWeights[GOLD][type][row * 8 + col] = weight;
+                posWeights[GOLD][type][row * 8 + 7 - col] = weight;
+
+                //write two values for silver, which are just mirrored 
+                //horizontally from gold's positions
+                posWeights[SILVER][type][(7 - row) * 8 + col] = weight;
+                posWeights[SILVER][type][(7 - row) * 8 + 7 - col] = weight;
+            }
+        }
+        
+        //Read the extra separator line
+        string line;
+        getline(fin, line);
+    }
+
+    fin.close();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//Save position weights to the specified file
+//////////////////////////////////////////////////////////////////////////////   
+void Eval :: savePositionWeights(string filename)
+{
+    ofstream fout(filename.c_str());
+
+    for (int type = 0; type < MAX_TYPES; type++)
+    {               
+        for (int row = 0; row < 8; row ++)
+        {
+            for (int col = 0; col < 4; col++)
+            {
+                fout << posWeights[GOLD][type][row * 8 + col] << " ";
+            }
+            
+            fout << endl;
+        }
+
+        //Write an extra separator line
+        fout << endl;
+    }
+    fout.close(); 
+}
+

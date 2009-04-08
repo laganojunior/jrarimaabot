@@ -6,7 +6,7 @@
 #include "step.h"
 #include "hash.h"
 #include "historyscore.h"
-#include <vector>
+#include <list>
 
 //functions and structures used for scoring heurisitics
 
@@ -18,6 +18,7 @@ class Eval
     Eval()
     {
         reset();
+        loadWeights();
     }
     void reset();
 
@@ -26,7 +27,17 @@ class Eval
 
     void scoreCombos(list<StepCombo>& combos, unsigned char color);
 
+    void loadWeights();
+    void saveWeights();
+    void loadPositionWeights(string filename);
+    void savePositionWeights(string filename);
+
     HistoryScoreTable histTable;
+
+    //evaluation weights////////////////////////
+
+    //static position weights for square, piece pairs
+    short posWeights[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
 };
 
 #endif
