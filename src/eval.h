@@ -34,7 +34,7 @@ class Eval
 
     //static material weights for types and number of that type on the 
     //board
-    short materialWeights[MAX_TYPES][8];
+    short materialWeights[MAX_TYPES][9];
 
     //static position weights for square, piece pairs
     short posWeights[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
@@ -42,7 +42,7 @@ class Eval
     //weight penalties for frozen pieces, indexed by type and number of
     //that type frozen. Note there is no entry for the elephant, which
     //cannot be frozen
-    short frozenWeights[MAX_TYPES-1][8];
+    short frozenWeights[MAX_TYPES-1][9];
 };
 
 #endif

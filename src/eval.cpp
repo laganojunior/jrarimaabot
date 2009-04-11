@@ -28,18 +28,18 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     short score;
     
     //material
-    short materialScore =    materialWeights[ELEPHANT][numBits(board.pieces[GOLD][ELEPHANT])-1]
-                           + materialWeights[CAMEL][numBits(board.pieces[GOLD][CAMEL])-1]
-                           + materialWeights[HORSE][numBits(board.pieces[GOLD][HORSE])-1]
-                           + materialWeights[DOG][numBits(board.pieces[GOLD][DOG])-1]
-                           + materialWeights[CAT][numBits(board.pieces[GOLD][CAT])-1]
-                           + materialWeights[RABBIT][numBits(board.pieces[GOLD][RABBIT])-1]
-                           - materialWeights[ELEPHANT][numBits(board.pieces[SILVER][ELEPHANT])-1]
-                           - materialWeights[CAMEL][numBits(board.pieces[SILVER][CAMEL])-1]
-                           - materialWeights[HORSE][numBits(board.pieces[SILVER][HORSE])-1]
-                           - materialWeights[DOG][numBits(board.pieces[SILVER][DOG])-1]
-                           - materialWeights[CAT][numBits(board.pieces[SILVER][CAT])-1]
-                           - materialWeights[RABBIT][numBits(board.pieces[SILVER][RABBIT])-1];
+    short materialScore =    materialWeights[ELEPHANT][numBits(board.pieces[GOLD][ELEPHANT])]
+                           + materialWeights[CAMEL][numBits(board.pieces[GOLD][CAMEL])]
+                           + materialWeights[HORSE][numBits(board.pieces[GOLD][HORSE])]
+                           + materialWeights[DOG][numBits(board.pieces[GOLD][DOG])]
+                           + materialWeights[CAT][numBits(board.pieces[GOLD][CAT])]
+                           + materialWeights[RABBIT][numBits(board.pieces[GOLD][RABBIT])]
+                           - materialWeights[ELEPHANT][numBits(board.pieces[SILVER][ELEPHANT])]
+                           - materialWeights[CAMEL][numBits(board.pieces[SILVER][CAMEL])]
+                           - materialWeights[HORSE][numBits(board.pieces[SILVER][HORSE])]
+                           - materialWeights[DOG][numBits(board.pieces[SILVER][DOG])]
+                           - materialWeights[CAT][numBits(board.pieces[SILVER][CAT])]
+                           - materialWeights[RABBIT][numBits(board.pieces[SILVER][RABBIT])];
 
     //scores for static positions
     short positionScore = 0;
@@ -194,9 +194,10 @@ void Eval :: loadWeights(string filename)
         getline(fin, line);
         stringstream lineStream(line);
 
+        materialWeights[type][0] = 0;
         for (int i = 0; i < maxNum; i++)
         {
-            lineStream >> materialWeights[type][i];
+            lineStream >> materialWeights[type][i + 1];
         }
     }
  
@@ -268,9 +269,11 @@ void Eval :: loadWeights(string filename)
         getline(fin, line);
         stringstream lineStream(line);
 
+        frozenWeights[type][0] = 0;
+
         for (int i = 0; i < maxNum; i++)
         {
-            lineStream >> frozenWeights[type][i];
+            lineStream >> frozenWeights[type][i+1];
         }
     }
 
