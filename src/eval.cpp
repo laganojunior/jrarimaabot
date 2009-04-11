@@ -88,41 +88,40 @@ bool Eval :: isWin(Board& board, unsigned char color)
 //gives the combo in the array some heurisitic scores to see which order the
 //moves should be considered in.
 //////////////////////////////////////////////////////////////////////////////
-void Eval :: scoreCombos(list<StepCombo>& combos, unsigned char color)
+void Eval :: scoreCombos(vector<StepCombo>& combos, unsigned char color)
 {
-    for (list<StepCombo> :: iterator i = combos.begin(); 
-         i != combos.end(); ++i)
+    for (int i = 0; i < combos.size(); ++i)
     {
-        i->score = 0;
+        combos[i].score = 0;
 
         //give moves some score based on captures, note that pieces are
         //numerically ordered with ELEPHANT being 0, and RABBIT being 5, so
         //to give a sensical score in respect to type, value should reversed
         //in respect to these numbers
-        if (i->piece1IsCaptured())
+        if (combos[i].piece1IsCaptured())
         {
-            unsigned char piece = i->getPiece1();
+            unsigned char piece = combos[i].getPiece1();
             if (colorOfPiece(piece) != color)
-                i->score += 100 * (MAX_TYPES - typeOfPiece(piece));
+                combos[i].score += 100 * (MAX_TYPES - typeOfPiece(piece));
             else
-                i->score -= 100 * (MAX_TYPES - typeOfPiece(piece));
+                combos[i].score -= 100 * (MAX_TYPES - typeOfPiece(piece));
         }
         
-        if (i->piece2IsCaptured())
+        if (combos[i].piece2IsCaptured())
         {
-            unsigned char piece = i->getPiece2();
+            unsigned char piece = combos[i].getPiece2();
             if (colorOfPiece(piece) != color)
-                i->score += 100 * (MAX_TYPES - typeOfPiece(piece));
+                combos[i].score += 100 * (MAX_TYPES - typeOfPiece(piece));
             else
-                i->score -= 100 * (MAX_TYPES - typeOfPiece(piece));
+                combos[i].score -= 100 * (MAX_TYPES - typeOfPiece(piece));
         }
 
         //give moves some score based on push/pulling moves
-        if (i->stepCost > 1 && i->getFrom1() != ILLEGAL_SQUARE)
-            i->score += 25;
+        if (combos[i].stepCost > 1 && combos[i].getFrom1() != ILLEGAL_SQUARE)
+            combos[i].score += 25;
 
         //give moves a boost according to their history score
-        i->score += histTable.getScore(i->getRawMove(), color);
+        combos[i].score += histTable.getScore(combos[i].getRawMove(), color);
     }
 }
 

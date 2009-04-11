@@ -9,7 +9,6 @@
 #include "hash.h"
 #include <string>
 #include <vector>
-#include <list>
 
 using namespace std;
 
@@ -50,13 +49,13 @@ class Board
     void changeTurn();
     void unchangeTurn(unsigned int oldStepsLeft);
 
-    unsigned int genMoves(list<StepCombo>& combos);
-    unsigned int genDependentMoves(list<StepCombo>& combos,
+    unsigned int genMoves(vector<StepCombo>& combos);
+    unsigned int genDependentMoves(vector<StepCombo>& combos,
                                    StepCombo& lastMove);
-    unsigned int genMovesForPiece(list<StepCombo>& combos, 
+    unsigned int genMovesForPiece(vector<StepCombo>& combos, 
                                   unsigned char piece, unsigned char square,
                                   StepCombo& ignoreMove);
-    unsigned int genMovesToSquare(list<StepCombo>& combos, unsigned char to,
+    unsigned int genMovesToSquare(vector<StepCombo>& combos, unsigned char to,
                                   StepCombo& ignoreMove);
     bool gen1Step(StepCombo& combo, unsigned char from, unsigned char to);
     bool gen2Step(StepCombo& combo, unsigned char from1, unsigned char to1,

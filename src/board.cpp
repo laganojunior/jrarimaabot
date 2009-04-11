@@ -463,7 +463,7 @@ void Board :: unchangeTurn(unsigned int oldStepsLeft)
 //interesting other multi-step combos. Returns the number of moves generated
 //and appends all moves generated at the end of the list given
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genMoves(list<StepCombo>& combos)
+unsigned int Board :: genMoves(vector<StepCombo>& combos)
 {
     if (stepsLeft < 1) //no steps left to move
         return 0;
@@ -929,7 +929,7 @@ unsigned int Board :: genMoves(list<StepCombo>& combos)
 //that get a piece next to the piece last moved. Returns the
 //number of moves generated and appends the move generated to the list given
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
+unsigned int Board :: genDependentMoves(vector<StepCombo>& combos,
                                         StepCombo& lastMove)
 {
     unsigned int num = 0;
@@ -1061,7 +1061,7 @@ unsigned int Board :: genDependentMoves(list<StepCombo>& combos,
 //Returns the number of moves generated and appends all moves generated to
 //the end of the list given.
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genMovesForPiece(list<StepCombo>& combos,
+unsigned int Board :: genMovesForPiece(vector<StepCombo>& combos,
                                unsigned char piece, unsigned char square,
                                StepCombo& ignoreMove)
 {
@@ -1197,15 +1197,14 @@ unsigned int Board :: genMovesForPiece(list<StepCombo>& combos,
     }
 
     //Remove the ignore move
-    for (list<StepCombo> :: iterator i = combos.begin();
-         i != combos.end(); i++)
+    for (int i = 0; i < combos.size(); i++)
     {
-        if (i->getFrom1() == ignoreMove.getFrom1() && 
-            i->getFrom2() == ignoreMove.getFrom2() &&
-            i->getTo1()   == ignoreMove.getTo1())
+        if (combos[i].getFrom1() == ignoreMove.getFrom1() && 
+            combos[i].getFrom2() == ignoreMove.getFrom2() &&
+            combos[i].getTo1()   == ignoreMove.getTo1())
         {
-            combos.erase(i++);
-            i--;
+            combos[i] = combos[combos.size()-1];
+            combos.resize(combos.size()-1);
             num--;
         }   
     }
@@ -1219,7 +1218,7 @@ unsigned int Board :: genMovesForPiece(list<StepCombo>& combos,
 //as the ignoreMove. Returns the number of moves generated and appends all
 //moves generated to the end of the list given.
 //////////////////////////////////////////////////////////////////////////////
-unsigned int Board :: genMovesToSquare(list<StepCombo>& combos, 
+unsigned int Board :: genMovesToSquare(vector<StepCombo>& combos, 
                                unsigned char to, StepCombo& ignoreMove)
 {
     unsigned int num = 0;
@@ -1363,16 +1362,15 @@ unsigned int Board :: genMovesToSquare(list<StepCombo>& combos,
     }
 
     //Remove the ignore move
-    for (list<StepCombo> :: iterator i = combos.begin();
-         i != combos.end(); i++)
+    for (int i = 0; i < combos.size(); i++)
     {
-        if (i->getFrom1() == ignoreMove.getFrom1() && 
-            i->getFrom2() == ignoreMove.getFrom2() &&
-            i->getTo1()   == ignoreMove.getTo1())
+        if (combos[i].getFrom1() == ignoreMove.getFrom1() && 
+            combos[i].getFrom2() == ignoreMove.getFrom2() &&
+            combos[i].getTo1()   == ignoreMove.getTo1())
         {
-            combos.erase(i);
+            combos[i] = combos[combos.size()-1];
+            combos.resize(combos.size()-1);
             num--;
-            break;
         }   
     }
 

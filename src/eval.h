@@ -24,7 +24,7 @@ class Eval
     short evalBoard(Board& board, unsigned char color); 
     bool isWin(Board& board, unsigned char color);
 
-    void scoreCombos(list<StepCombo>& combos, unsigned char color);
+    void scoreCombos(vector<StepCombo>& combos, unsigned char color);
 
     void loadWeights();
     void saveWeights();

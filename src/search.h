@@ -40,7 +40,7 @@ class Search
 
     void loadMoveFile(string filename, Board board);  
 
-    StepCombo getNextBestComboAndRemove(list<StepCombo>& combos);
+    StepCombo getNextBestComboAndRemove(vector<StepCombo>& combos);
 
     unsigned int numTerminalNodes; //number of terminal nodes explored
     unsigned int numTotalNodes;    //number of all nodes explored
@@ -68,7 +68,7 @@ class Search
     //keep global arrays for move generation, so that the step combo 
     //constructors are not called so much. The outer vector is indexed by
     //ply. The inner vector keeps the combos for that ply
-    vector<list<StepCombo> > combos;
+    vector<vector<StepCombo> > combos;
 
     //Eval instance to score stuff
     Eval eval;
