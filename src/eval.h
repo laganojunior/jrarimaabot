@@ -38,6 +38,11 @@ class Eval
 
     //static position weights for square, piece pairs
     short posWeights[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
+
+    //weight penalties for frozen pieces, indexed by type and number of
+    //that type frozen. Note there is no entry for the elephant, which
+    //cannot be frozen
+    short frozenWeights[MAX_TYPES-1][8];
 };
 
 #endif

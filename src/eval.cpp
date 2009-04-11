@@ -65,7 +65,31 @@ short Eval :: evalBoard(Board& board, unsigned char color)
         }
     }
 
-    score = materialScore + positionScore;
+    //scores for frozen pieces
+    short frozenScore = 0;
+
+    Int64 strongGold = board.pieces[GOLD][ELEPHANT];
+    Int64 strongSilver = board.pieces[SILVER][ELEPHANT];
+
+    Int64 notNearGold   = ~near(board.getAllPiecesOfColor(GOLD));
+    Int64 notNearSilver = ~near(board.getAllPiecesOfColor(SILVER));
+
+    for (int type = CAMEL; type < MAX_TYPES; type++)
+    {
+        frozenScore += frozenWeights[type - 1]
+                                    [numBits(board.pieces[GOLD][type] 
+                                    & near(strongSilver) & notNearGold)]
+                     - frozenWeights[type - 1]
+                                    [numBits(board.pieces[SILVER][type] 
+                                    & near(strongGold) & notNearSilver)];
+
+        //Update the strong pieces for the next type iteration
+        strongGold   |= board.pieces[GOLD][type];
+        strongSilver |= board.pieces[SILVER][type];
+
+    }
+
+    score = materialScore + positionScore + frozenScore;
 
     if (color == GOLD)
         return score;
@@ -214,6 +238,42 @@ void Eval :: loadWeights(string filename)
         getline(fin, line);
     }
 
+    //Frozen Penalties////////////////////////////////////////////////////////
+    //Note that elephants are not included in this array
+    for (int type = 0; type < MAX_TYPES - 1; type++)
+    {   
+        int maxNum;
+
+        switch (type + 1) //increase type by 1, as type 0 is the elephant
+        {
+            case CAMEL:
+            {
+                maxNum = 1;
+            }break;
+
+            case HORSE:
+            case DOG:
+            case CAT:
+            {
+                maxNum = 2;
+            }break;
+
+            case RABBIT:
+            {
+                maxNum = 8;
+            }break;
+        }
+
+        string line;
+        getline(fin, line);
+        stringstream lineStream(line);
+
+        for (int i = 0; i < maxNum; i++)
+        {
+            lineStream >> frozenWeights[type][i];
+        }
+    }
+
     fin.close();
 }
 
@@ -274,6 +334,39 @@ void Eval :: saveWeights(string filename)
         }
 
         //Write an extra separator line
+        fout << endl;
+    }
+
+    //Frozen Penalties////////////////////////////////////////////////////////
+    //Note that elephants are not included in this array
+    for (int type = 0; type < MAX_TYPES - 1; type++)
+    {   
+        int maxNum;
+
+        switch (type + 1) //increase type by 1, as type 0 is the elephant
+        {
+            case CAMEL:
+            {
+                maxNum = 1;
+            }break;
+
+            case HORSE:
+            case DOG:
+            case CAT:
+            {
+                maxNum = 2;
+            }break;
+
+            case RABBIT:
+            {
+                maxNum = 8;
+            }break;
+        }
+
+        for (int i = 0; i < maxNum; i++)
+        {
+            fout << frozenWeights[type][i] << " ";
+        }
         fout << endl;
     }
 
