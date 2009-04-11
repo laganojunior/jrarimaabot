@@ -6,10 +6,12 @@
 //integers, wheter they are bitboard representations, hashes, etc..
 //////////////////////////////////////////////////////////////////////////////
 
-#include "defines.h"
 #include <iostream>
 #include <string>
 #include <assert.h>
+
+//Bitscan return code
+#define NO_BIT_FOUND -1
 
 using namespace std;
 

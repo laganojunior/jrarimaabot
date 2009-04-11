@@ -2,7 +2,6 @@
 #define __JR_EVAL_H__
 
 #include "board.h"
-#include "defines.h"
 #include "step.h"
 #include "hash.h"
 #include "historyscore.h"

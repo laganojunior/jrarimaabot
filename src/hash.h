@@ -3,7 +3,6 @@
 
 //hash table data structures to keep data for transpositions
 
-#include "defines.h"
 #include "int64.h"
 #include <assert.h>
 #include <string.h>

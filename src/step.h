@@ -2,7 +2,6 @@
 #define __JR_STEP_H__
 
 #include "piece.h"
-#include "defines.h"
 #include "rawmove.h"
 #include <string>
 #include <vector>

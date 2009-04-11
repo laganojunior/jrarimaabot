@@ -173,7 +173,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         if (depth <= thisEntry.getDepth())
         {
             short cutScore;
-            if (thisEntry.getScoreType() == SCORE_ENTRY_EXACT)                            
+            if (thisEntry.getScoreType() == TRANSPOSITION_SCORETYPE_EXACT)                            
             {       
                 cutScore = thisEntry.getScore();
                 if (cutScore > beta)
@@ -187,14 +187,14 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
             }
 
             //upper bound adjust
-            if (thisEntry.getScoreType() == SCORE_ENTRY_UPPER)
+            if (thisEntry.getScoreType() == TRANSPOSITION_SCORETYPE_UPPER)
             {
                 beta = thisEntry.getScore();
                 cutScore = alpha;
             }
 
             //lower bound adjust
-            if (thisEntry.getScoreType() == SCORE_ENTRY_LOWER)
+            if (thisEntry.getScoreType() == TRANSPOSITION_SCORETYPE_LOWER)
             {
                 alpha = thisEntry.getScore();
                 cutScore = beta;
