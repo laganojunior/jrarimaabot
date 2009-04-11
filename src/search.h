@@ -32,8 +32,7 @@ class Search
     StepCombo iterativeDeepen(Board& board, int maxDepth, ostream& log);
     short searchNode(Board& board, int depth, int ply, short alpha,  
                               short beta, vector<string>& nodePV, 
-                              bool isRoot, StepCombo& lastMove,
-                              bool genDependent);
+                              StepCombo& lastMove, bool genDependent);
     short doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                           short beta, vector<string>& nodePV,
                           StepCombo& combo, short nodeScore);

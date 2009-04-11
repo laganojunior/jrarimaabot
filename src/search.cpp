@@ -69,7 +69,7 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
         pass.genPass(board.stepsLeft);
         pass.evalScore = eval.evalBoard(board, board.sideToMove);
         short score = searchNode(board, currDepth, 4 - board.stepsLeft,
-                                 -30000, 30000, pv, true, pass, false);
+                                 -30000, 30000, pv, pass, false);
         
         Int64 currMillis = (clock() - reftime) * 1000 / CLOCKS_PER_SEC + 1; 
         log << setw(6) << currDepth << setw(6) << score << setw(15) 
@@ -112,9 +112,9 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 //node to nodePV. The refer board is the state of the board at the beginning
 //of the turn, so don't go down paths that repeat that state
 //////////////////////////////////////////////////////////////////////////////
-short Search :: searchNode(Board& board, int depth, int ply, short alpha, 
-                           short beta, vector<string>& nodePV, bool isRoot
-                           ,StepCombo& lastMove, bool genDependent)
+short Search :: searchNode(Board& board, int depth, int ply, short alpha,  
+                           short beta, vector<string>& nodePV, 
+                           StepCombo& lastMove, bool genDependent)
 {   
     ++numTotalNodes; //count the node as explored
 
@@ -168,12 +168,12 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         TranspositionEntry thisEntry = transTable.getEntry(board.hash);  
 
         //adjust the bounds with the bounds in the hash entry, if the depth 
-        //matches
-
-        //exact bounds
-        if (depth <= thisEntry.getDepth())
+        //matches, but only if the root turn has been completed, to avoid   
+        //premature cuts
+        if (depth <= thisEntry.getDepth() && ply >= 4)
         {
             short cutScore;
+            //exact bounds
             if (thisEntry.getScoreType() == TRANSPOSITION_SCORETYPE_EXACT)                            
             {       
                 cutScore = thisEntry.getScore();
@@ -201,10 +201,8 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                 cutScore = beta;
             }
 
-            //check if the adjustments made a cutoff, but only do it if this
-            //is not the root node, as at the root, there should be at least
-            //one move in the pv.
-            if (alpha >= beta && !isRoot)
+            //check if the adjustments made a cutoff.
+            if (alpha >= beta)
             {
                 nodePV.resize(1);
                 nodePV[0] = "<HT>";
@@ -503,7 +501,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         nodeScore = searchNode(board, 
                                depth - combo.stepCost,
                                ply + combo.stepCost,
-                               alpha, beta, thisPV, false, combo,
+                               alpha, beta, thisPV, combo,
                                genDependent);
     }
     else
@@ -572,7 +570,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         nodeScore = -searchNode(board, 
                                 depth - combo.stepCost,
                                 ply + combo.stepCost,
-                                -beta, -alpha, thisPV, false, pass,
+                                -beta, -alpha, thisPV, pass,
                                 false);
 
         //Decrement board state occurences
