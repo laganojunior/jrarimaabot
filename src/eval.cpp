@@ -28,18 +28,18 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     short score;
     
     //material
-    short materialScore =    numBits(board.pieces[GOLD][ELEPHANT]) * 1200
-                           + numBits(board.pieces[GOLD][CAMEL]) * 700 
-                           + numBits(board.pieces[GOLD][HORSE]) * 500 
-                           + numBits(board.pieces[GOLD][DOG]) * 300 
-                           + numBits(board.pieces[GOLD][CAT]) * 200
-                           + numBits(board.pieces[GOLD][RABBIT]) * 100
-                           - numBits(board.pieces[SILVER][ELEPHANT]) * 1200
-                           - numBits(board.pieces[SILVER][CAMEL]) * 700 
-                           - numBits(board.pieces[SILVER][HORSE]) * 500 
-                           - numBits(board.pieces[SILVER][DOG]) * 300 
-                           - numBits(board.pieces[SILVER][CAT]) * 200
-                           - numBits(board.pieces[SILVER][RABBIT]) * 100;
+    short materialScore =    materialWeights[ELEPHANT][numBits(board.pieces[GOLD][ELEPHANT])-1]
+                           + materialWeights[CAMEL][numBits(board.pieces[GOLD][CAMEL])-1]
+                           + materialWeights[HORSE][numBits(board.pieces[GOLD][HORSE])-1]
+                           + materialWeights[DOG][numBits(board.pieces[GOLD][DOG])-1]
+                           + materialWeights[CAT][numBits(board.pieces[GOLD][CAT])-1]
+                           + materialWeights[RABBIT][numBits(board.pieces[GOLD][RABBIT])-1]
+                           - materialWeights[ELEPHANT][numBits(board.pieces[SILVER][ELEPHANT])-1]
+                           - materialWeights[CAMEL][numBits(board.pieces[SILVER][CAMEL])-1]
+                           - materialWeights[HORSE][numBits(board.pieces[SILVER][HORSE])-1]
+                           - materialWeights[DOG][numBits(board.pieces[SILVER][DOG])-1]
+                           - materialWeights[CAT][numBits(board.pieces[SILVER][CAT])-1]
+                           - materialWeights[RABBIT][numBits(board.pieces[SILVER][RABBIT])-1];
 
     //scores for static positions
     short positionScore = 0;
@@ -140,6 +140,46 @@ void Eval :: loadWeights(string filename)
         throw error;
     }
 
+    //Material Weights////////////////////////////////////////////////////////
+    for (int type = 0; type < MAX_TYPES; type++)
+    {   
+        int maxNum;
+
+        switch (type)
+        {
+            case ELEPHANT:
+            case CAMEL:
+            {
+                maxNum = 1;
+            }break;
+
+            case HORSE:
+            case DOG:
+            case CAT:
+            {
+                maxNum = 2;
+            }break;
+
+            case RABBIT:
+            {
+                maxNum = 8;
+            }break;
+        }
+
+        string line;
+        getline(fin, line);
+        stringstream lineStream(line);
+
+        for (int i = 0; i < maxNum; i++)
+        {
+            lineStream >> materialWeights[type][i];
+        }
+    }
+ 
+    //Read the extra separator line
+    string line;
+    getline(fin, line);
+
     //Position Weights////////////////////////////////////////////////////////
     
     //Load the weights from the file, which are all in gold's perspective,
@@ -183,6 +223,42 @@ void Eval :: loadWeights(string filename)
 void Eval :: saveWeights(string filename)
 {
     ofstream fout(filename.c_str());
+
+    //Material Weights////////////////////////////////////////////////////////
+    for (int type = 0; type < MAX_TYPES; type++)
+    {   
+        int maxNum;
+
+        switch (type)
+        {
+            case ELEPHANT:
+            case CAMEL:
+            {
+                maxNum = 1;
+            }break;
+
+            case HORSE:
+            case DOG:
+            case CAT:
+            {
+                maxNum = 2;
+            }break;
+
+            case RABBIT:
+            {
+                maxNum = 8;
+            }break;
+        }
+
+        for (int i = 0; i < maxNum; i++)
+        {
+            fout << materialWeights[type][i] << " ";
+        }
+        fout << endl;
+    }
+
+    //Write an extra separator line
+    fout << endl;
 
     //Position Weights////////////////////////////////////////////////////////
     for (int type = 0; type < MAX_TYPES; type++)

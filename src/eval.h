@@ -32,6 +32,10 @@ class Eval
 
     //evaluation weights////////////////////////
 
+    //static material weights for types and number of that type on the 
+    //board
+    short materialWeights[MAX_TYPES][8];
+
     //static position weights for square, piece pairs
     short posWeights[MAX_COLORS][MAX_TYPES][NUM_SQUARES];
 };
