@@ -126,28 +126,22 @@ void Eval :: scoreCombos(vector<StepCombo>& combos, unsigned char color)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Loads all weight files
+//Load weights from the file specified
 //////////////////////////////////////////////////////////////////////////////
-void Eval :: loadWeights()
-{
-    loadPositionWeights("evalWeights/positionWeights.txt");
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//Load position weights from the specified file
-//////////////////////////////////////////////////////////////////////////////
-void Eval :: loadPositionWeights(string filename)
+void Eval :: loadWeights(string filename)
 {
     ifstream fin(filename.c_str());
 
     if (!fin.is_open())
     {
         Error error;
-        error << "From Eval :: loadPositionWeights\n";
+        error << "From Eval :: loadWeights\n";
         error << "Couldn't open file " << filename << "\n";
         throw error;
     }
 
+    //Position Weights////////////////////////////////////////////////////////
+    
     //Load the weights from the file, which are all in gold's perspective,
     //and only describe the left hand side of the board.
     for (int type = 0; type < MAX_TYPES; type++)
@@ -184,12 +178,13 @@ void Eval :: loadPositionWeights(string filename)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//Save position weights to the specified file
+//Save weights to the specified file
 //////////////////////////////////////////////////////////////////////////////   
-void Eval :: savePositionWeights(string filename)
+void Eval :: saveWeights(string filename)
 {
     ofstream fout(filename.c_str());
 
+    //Position Weights////////////////////////////////////////////////////////
     for (int type = 0; type < MAX_TYPES; type++)
     {               
         for (int row = 0; row < 8; row ++)
@@ -205,6 +200,7 @@ void Eval :: savePositionWeights(string filename)
         //Write an extra separator line
         fout << endl;
     }
+
     fout.close(); 
 }
 

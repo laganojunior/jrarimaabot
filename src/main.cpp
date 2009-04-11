@@ -64,6 +64,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         
         Search search(hashBits);
         search.loadMoveFile(moveFile, board);
+        search.eval.loadWeights("evalWeights/weights.txt");
         
         StepCombo bestMove = search.iterativeDeepen(board, maxDepth, logFile);
                                                     

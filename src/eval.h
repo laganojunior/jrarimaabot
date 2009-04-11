@@ -17,7 +17,6 @@ class Eval
     Eval()
     {
         reset();
-        loadWeights();
     }
     void reset();
 
@@ -26,10 +25,8 @@ class Eval
 
     void scoreCombos(vector<StepCombo>& combos, unsigned char color);
 
-    void loadWeights();
-    void saveWeights();
-    void loadPositionWeights(string filename);
-    void savePositionWeights(string filename);
+    void loadWeights(string filename);
+    void saveWeights(string filename);
 
     HistoryScoreTable histTable;
 
