@@ -5,6 +5,7 @@
 #include "piece.h"
 #include "square.h"
 #include "eval.h"
+#include "maxheap.h"
 #include <fstream>
 #include <time.h>
 #include <string.h>
@@ -387,11 +388,15 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     //score the combos for sorting
     eval.scoreCombos(combos[ply], board.sideToMove); 
 
+    //max heapify the array, in order to implement a priority queue based
+    //on score
+    maxHeapCreate(combos[ply]);
+
     //play each step, and explore each subtree
     while (!combos[ply].empty())
     {
         //get the next combo to look at.
-        StepCombo next = getNextBestComboAndRemove(combos[ply]);
+        StepCombo next = maxHeapGetTopAndRemove(combos[ply]);
 
         //explore the subtree for this move.
         short nodeScore = doMoveAndSearch(board, depth, ply, alpha, beta, 

@@ -104,17 +104,27 @@ class StepCombo
 
     void reset();
     
+    //////////////////////////////////////////////////////////////////////////
+    //Generate a combo that will pass the rest of the turn
+    //////////////////////////////////////////////////////////////////////////
     void genPass(int stepsLeft)
     {
         numSteps = 0;
         stepCost = stepsLeft;
     }
     
+    //////////////////////////////////////////////////////////////////////////
+    //Returns true iff this combo is a pass 
+    //////////////////////////////////////////////////////////////////////////
     bool isPass()
     {
         return numSteps == 0 && stepCost > 0;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+    //Returns true iff the combo given to compare with has the same steps,
+    //that is they both produce the same result when played on the same board
+    //////////////////////////////////////////////////////////////////////////
     bool operator==(StepCombo& comp)
     {
         if (numSteps != comp.numSteps)
@@ -128,6 +138,15 @@ class StepCombo
         
         return true;
     }     
+
+    //////////////////////////////////////////////////////////////////////////
+    //Returns true iff this combo's score is greater than the comparison
+    //combo's score.
+    //////////////////////////////////////////////////////////////////////////
+    bool operator>(StepCombo& comp)
+    {
+        return score > comp.score;
+    }  
     
     Step steps[8]; //the set of steps in this combo, note that the array
                    //can be larger than the actual number of steps stored

@@ -3,6 +3,7 @@
 #include "int64.h"
 #include "step.h"
 #include "search.h"
+#include "maxheap.h"
 #include "hash.h"
 #include <iostream>
 #include <string>
@@ -167,6 +168,19 @@ int main(int argc, char * args[])
             else if (string(args[i]) == string("--test"))
             {
 				mode = MODE_NONE;
+
+                vector<int> intvec;
+                for (int i = 0; i < 1000; ++i)
+                {
+                    intvec.push_back(rand());
+                }
+
+                maxHeapCreate<int>(intvec);
+                cout << "Size is " << intvec.size() << endl;
+                while (!intvec.empty())
+                {
+                    cout << maxHeapGetTopAndRemove(intvec) << endl;
+                }
             }
 
             //ignore any other flags
