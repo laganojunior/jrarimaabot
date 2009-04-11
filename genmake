@@ -11,7 +11,7 @@ else:
     targetname = sys.argv[1]
 
 releaseflags  = "-O2 -pipe -march=native"
-debugflags    = "-O2 -pg -pipe -march=native"
+debugflags    = "-O2 -pg -fno-inline -pipe -march=native"
 headers = []
 sources = []
 sources_suffix = []
