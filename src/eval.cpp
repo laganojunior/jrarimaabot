@@ -315,7 +315,7 @@ void Eval :: saveWeights(string filename)
 
         for (int i = 0; i < maxNum; i++)
         {
-            fout << materialWeights[type][i] << " ";
+            fout << materialWeights[type][i+1] << " ";
         }
         fout << endl;
     }
@@ -368,7 +368,7 @@ void Eval :: saveWeights(string filename)
 
         for (int i = 0; i < maxNum; i++)
         {
-            fout << frozenWeights[type][i] << " ";
+            fout << frozenWeights[type][i+1] << " ";
         }
         fout << endl;
     }

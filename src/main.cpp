@@ -25,8 +25,7 @@ using namespace std;
 //move to stdout.
 //////////////////////////////////////////////////////////////////////////////
 void gameroom(fstream& logFile, string positionFile, string moveFile,  
-              string gamestateFile, string evalWeightFile,
-              int maxDepth, int hashBits)
+              string gamestateFile, int maxDepth, int hashBits)
 {
 
     //start logging, noting the time.
@@ -65,7 +64,6 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
         
         Search search(hashBits);
         search.loadMoveFile(moveFile, board);
-        search.eval.loadWeights(evalWeightFile);
         
         StepCombo bestMove = search.iterativeDeepen(board, maxDepth, logFile);
                                                     
@@ -101,7 +99,6 @@ int main(int argc, char * args[])
         string positionFile;
         string moveFile;
         string gamestateFile;
-        string evalWeightFile = string("evalWeights/weights.txt");
 
         //parse the arguments to see what behavior is desired.
         for (int i = 1; i < argc; ++i)
@@ -166,16 +163,24 @@ int main(int argc, char * args[])
                 board.loadPositionFile(positionFile);
 
                 Eval eval;
-                eval.loadWeights(evalWeightFile);
                 cout << eval.evalBoard(board, board.sideToMove) << endl;
             }
             else if (string(args[i]) == string("--test"))
             {
 				mode = MODE_NONE;
 
-                Eval eval;
-                eval.loadWeights("evalWeights/weights.txt");
-                eval.saveWeights("evalWeights/weights.txt.out");
+                vector<int> intvec;
+                for (int i = 0; i < 1000; ++i)
+                {
+                    intvec.push_back(rand());
+                }
+
+                maxHeapCreate<int>(intvec);
+                cout << "Size is " << intvec.size() << endl;
+                while (!intvec.empty())
+                {
+                    cout << maxHeapGetTopAndRemove(intvec) << endl;
+                }
             }
 
             //ignore any other flags
@@ -203,7 +208,7 @@ int main(int argc, char * args[])
         if (mode == MODE_GAMEROOM)
         {
             gameroom(logFile, positionFile, moveFile, gamestateFile,
-                     evalWeightFile, maxDepth, hashBits);
+                     maxDepth, hashBits);
         }
 
         logFile.flush();
