@@ -9,17 +9,11 @@
 class SearchHistEntry
 {
     public:
-    unsigned char earliestOccur; //Earliest ply this board state has occurred
-                                 //in respect to the beginning of the turn.
-                                 //That is, this number is either 0, 1, 2, 3
-                                 //or 4 for the number of steps played 
-                                 //between the beginning of the turn and this
-                                 //state
+    //Earliest ply this board state has occurred relative to the root node
+    //of the tree, indexed by player color.
+    unsigned char earliestOccur[MAX_COLORS];
 
     Int64 hash; //The full hash value
-
-    Int64 refer; //A hash that denotes the reference state at the beginning
-                 //of the turn.
 };
 
 //Hash table to keep occurences of the same board state within the same turn.
@@ -48,49 +42,37 @@ class SearchHistTable
         
         for (int i = 0; i < hashes.getNumEntries(); i++)
         {
-            hashes.getEntry(i).earliestOccur = 10;
+            hashes.getEntry(i).earliestOccur[GOLD]   = 255;
+            hashes.getEntry(i).earliestOccur[SILVER] = 255;
             hashes.getEntry(i).hash = 0;
-            hashes.getEntry(i).refer = 0;
         }
     }
 
     //////////////////////////////////////////////////////////////////////////
     //Returns true if that board state has already occurred at an earlier
-    //or equal ply than the input ply from the reference state
+    //or equal ply than the input ply from the root for that player
     //////////////////////////////////////////////////////////////////////////
-    bool hasOccurredAtPly(Int64 hash, unsigned char ply)
+    bool hasOccurredAtPly(Int64 hash, unsigned char ply, unsigned char color)
     {   
         SearchHistEntry& hist = hashes.getEntry(hash & hashMask);
-        return (hist.refer == currRefer 
-            &&  hist.hash == hash
-            &&  hist.earliestOccur < ply);
+        return (hist.hash == hash &&  hist.earliestOccur[color] < ply);
     }      
 
     //////////////////////////////////////////////////////////////////////////
     //Attempts to write a hash entry for the input hash occuring at the
     //input ply in respect to the current reference state. If there is
-    //already an entry, it is overwritten only if the reference hashes
-    //are different or if the input ply is earlier than
-    //the entry's ply
+    //already an entry, it is overwritten only if the input ply is earlier
+    //than the current entry's ply
     //////////////////////////////////////////////////////////////////////////
-    void setOccur(Int64 hash, unsigned char ply)
+    void setOccur(Int64 hash, unsigned char ply, unsigned char color)
     {
         SearchHistEntry& hist = hashes.getEntry(hash & hashMask);
         
-        if (hist.refer != currRefer || ply < hist.earliestOccur)
+        if (ply < hist.earliestOccur[color])
         {
             hist.hash  = hash;
-            hist.refer = currRefer;
-            hist.earliestOccur = ply;
+            hist.earliestOccur[color] = ply;
         }
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    //Sets the current reference state to a new random state
-    //////////////////////////////////////////////////////////////////////////
-    void genNewRefer()
-    {
-        currRefer = randInt64();
     }
 
     private:
@@ -99,11 +81,6 @@ class SearchHistTable
 
     //Mask to limit bits on accessing hashes
     Int64 hashMask;
-
-    //Hash to keep the reference state at the beginning of a turn. Note
-    //that this is just a random integer that is independent of the hashes
-    //kept by the board class.
-    Int64 currRefer;
 };
 
 #endif
