@@ -25,6 +25,7 @@ Search :: Search(int scoreHashBits)
     //Initialize hash tables
     transTable.setHashKeySize(scoreHashBits);
     gameHistTable.setHashKeySize(GAME_HIST_HASH_BITS);
+    searchHistTable.setHashKeySize(SEARCH_HIST_HASH_BITS);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -49,11 +50,8 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
     eval.reset();
     killerTable.reset();
     transTable.reset();
-    searchHistTables.resize(1);
-    searchHistTables[0].setHashKeySize(SEARCH_HIST_HASH_BITS);
-    searchHistTables[0].reset();
-    searchHistTables[0].genNewRefer();
-    searchHistTables[0].setOccur(board.hashPiecesOnly, 0);
+    searchHistTable.reset();
+    searchHistTable.setOccur(board.hashPiecesOnly, 0, board.sideToMove);
 
     log << setw(6) << "Depth" << setw(6) << "Score" << setw(15) 
         << "Nodes" << setw(10) << "Time(ms)" << setw(10)
@@ -69,7 +67,8 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
         pass.genPass(board.stepsLeft);
         pass.evalScore = eval.evalBoard(board, board.sideToMove);
         short score = searchNode(board, currDepth, 4 - board.stepsLeft,
-                                 -30000, 30000, pv, pass, false);
+                                 -30000, 30000, pv, pass, false,
+                                 board.hashPiecesOnly);
         
         Int64 currMillis = (clock() - reftime) * 1000 / CLOCKS_PER_SEC + 1; 
         log << setw(6) << currDepth << setw(6) << score << setw(15) 
@@ -114,7 +113,8 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
 //////////////////////////////////////////////////////////////////////////////
 short Search :: searchNode(Board& board, int depth, int ply, short alpha,  
                            short beta, vector<string>& nodePV, 
-                           StepCombo& lastMove, bool genDependent)
+                           StepCombo& lastMove, bool genDependent,
+                           Int64 turnRefer)
 {   
     ++numTotalNodes; //count the node as explored
 
@@ -156,7 +156,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
         pass.genPass(0);
         pass.evalScore = eval.evalBoard(board, board.sideToMove);
         return doMoveAndSearch(board, depth, ply, alpha, beta, nodePV, pass,
-                               pass.evalScore);
+                               pass.evalScore, turnRefer);
     }
 
     //list of moves to try before generating all the moves
@@ -297,7 +297,7 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
 
             short nodeScore = doMoveAndSearch(board, depth, ply, alpha, 
                                               beta, nodePV, next,
-                                              lastMove.evalScore); 
+                                              lastMove.evalScore, turnRefer);
 
             if (nodeScore > alpha) 
             {   
@@ -398,7 +398,8 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
 
         //explore the subtree for this move.
         short nodeScore = doMoveAndSearch(board, depth, ply, alpha, beta, 
-                                          nodePV, next, lastMove.evalScore); 
+                                          nodePV, next, lastMove.evalScore,
+                                          turnRefer);
             
         if (nodeScore > alpha) 
         {   
@@ -453,33 +454,22 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
 //////////////////////////////////////////////////////////////////////////////
 short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                                 short beta, vector<string>& nodePV,
-                                StepCombo& combo, short lastScore)
+                                StepCombo& combo, short lastScore,
+                                Int64 turnRefer)
 {
     
     board.playCombo(combo);  
 
-    //Make sure there is a search history table at the turn ply.
-    if (searchHistTables.size() < (ply / 4) + 1)
-    {
-        int oldSize = searchHistTables.size();
-        int newSize = (ply / 4) + 1;
-        searchHistTables.resize(newSize);
-        for (int i = oldSize; i < newSize; i++)
-        {
-            searchHistTables[i].setHashKeySize(SEARCH_HIST_HASH_BITS);
-            searchHistTables[i].reset();
-        }
-    }
-
     //Check if the position has already occured at a similar ply
-    if (searchHistTables[ply / 4].hasOccurredAtPly(board.hashPiecesOnly, ply))
+    if (searchHistTable.hasOccurredAtPly(board.hashPiecesOnly, ply,
+                                         board.sideToMove))
     {
         board.undoCombo(combo);
         return alpha;
     }
 
     //add this new board to the search history
-    searchHistTables[ply / 4].setOccur(board.hashPiecesOnly, ply);
+    searchHistTable.setOccur(board.hashPiecesOnly, ply, board.sideToMove);
     
     vector<string> thisPV;
     short nodeScore;
@@ -502,11 +492,19 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
                                depth - combo.stepCost,
                                ply + combo.stepCost,
                                alpha, beta, thisPV, combo,
-                               genDependent);
+                               genDependent, turnRefer);
     }
     else
     {
         //turn change is forced.
+
+        //Before passing, make sure the board is not back to the same state
+        //as in the beginning of the turn
+        if (turnRefer == board.hashPiecesOnly)
+        {
+            board.undoCombo(combo);
+            return alpha;
+        }
 
         //Check if the position is now a win for the player that just moved
         if (eval.isWin(board, board.sideToMove))
@@ -546,22 +544,9 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
         //Increment board state occurences
         gameHistTable.incrementOccur(board.hashPiecesOnly);
 
-        //Make sure there is a search history table at the new turn ply.
-        if (searchHistTables.size() < (ply / 4) + 2)
-        {
-            int oldSize = searchHistTables.size();
-            int newSize = (ply / 4) + 2;
-            searchHistTables.resize(newSize);
-            for (int i = oldSize; i < newSize; i++)
-            {
-                searchHistTables[i].setHashKeySize(SEARCH_HIST_HASH_BITS);
-                searchHistTables[i].reset();
-            }
-        }
-
-        //Change the reference state and add this state to the search history
-        searchHistTables[(ply / 4) + 1].genNewRefer();
-        searchHistTables[(ply / 4) + 1].setOccur(board.hashPiecesOnly, 0);
+        //Add this board for the new player to move to the search history
+        searchHistTable.setOccur(board.hashPiecesOnly, ply,
+                                board.sideToMove);
 
         //search through opponent's turn
         StepCombo pass;
@@ -571,7 +556,7 @@ short Search :: doMoveAndSearch(Board& board, int depth, int ply, short alpha,
                                 depth - combo.stepCost,
                                 ply + combo.stepCost,
                                 -beta, -alpha, thisPV, pass,
-                                false);
+                                false, board.hashPiecesOnly);
 
         //Decrement board state occurences
         gameHistTable.decrementOccur(board.hashPiecesOnly);

@@ -18,7 +18,7 @@
 #define SEARCH_MAX_COMBOS_PER_PLY 120
 
 //hash bit constants
-#define SEARCH_HIST_HASH_BITS 18
+#define SEARCH_HIST_HASH_BITS 10
 #define GAME_HIST_HASH_BITS 15
 
 using namespace std;
@@ -32,10 +32,11 @@ class Search
     StepCombo iterativeDeepen(Board& board, int maxDepth, ostream& log);
     short searchNode(Board& board, int depth, int ply, short alpha,  
                               short beta, vector<string>& nodePV, 
-                              StepCombo& lastMove, bool genDependent);
+                              StepCombo& lastMove, bool genDependent,
+                              Int64 turnRefer);
     short doMoveAndSearch(Board& board, int depth, int ply, short alpha,  
                           short beta, vector<string>& nodePV,
-                          StepCombo& combo, short nodeScore);
+                          StepCombo& combo, short nodeScore, Int64 turnRefer);
 
     void loadMoveFile(string filename, Board board);  
 
@@ -57,9 +58,8 @@ class Search
     GameHistTable gameHistTable;
 
     //a hash table to keep data on which positions have already occured at 
-    //an earlier ply in the same turn in order to not repeat nodes. One is
-    //kept for every turn ply.
-    vector<SearchHistTable> searchHistTables;
+    //an earlier ply in the same turn in order to not repeat nodes.
+    SearchHistTable searchHistTable;
 
     //Killer move table
     KillerMoveTable killerTable;
