@@ -40,8 +40,6 @@ class Search
 
     void loadMoveFile(string filename, Board board);  
 
-    StepCombo getNextBestComboAndRemove(vector<StepCombo>& combos);
-
     unsigned int numTerminalNodes; //number of terminal nodes explored
     unsigned int numTotalNodes;    //number of all nodes explored
     unsigned int totalNodesPerSec; //rate at which nodes are explored per 

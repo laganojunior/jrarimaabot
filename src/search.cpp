@@ -749,28 +749,3 @@ void Search :: loadMoveFile(string filename, Board board)
         }
     }
 }
-
-//////////////////////////////////////////////////////////////////////////////
-//Returns the next best combo from the list
-//according to the scores for each one and removes that combo from the list
-//////////////////////////////////////////////////////////////////////////////
-StepCombo Search :: getNextBestComboAndRemove(vector<StepCombo>& comboList)
-{
-    unsigned int bestIndex = 0;
-
-    //search for the best score
-    for (int i = 0; i < comboList.size(); ++i)
-    {
-        if (comboList[i].score > comboList[bestIndex].score)
-        {
-            bestIndex = i;
-        }
-    }
-
-    //remove the best combo
-    StepCombo bestCombo = comboList[bestIndex];
-    comboList[bestIndex] = comboList[comboList.size() - 1];
-    comboList.resize(comboList.size() - 1);
-
-    return bestCombo;
-} 
