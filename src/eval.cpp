@@ -22,6 +22,16 @@ void Eval :: reset()
 //////////////////////////////////////////////////////////////////////////////
 short Eval :: evalBoard(Board& board, unsigned char color)
 {
+    //Check first if there is an entry in the hash table for this position
+    EvalHashEntry entry;
+    if (hashTable.getEntry(board.hashPiecesOnly, entry))
+    {
+        if (entry.color == color)
+            return entry.score;
+        else
+            return -entry.score;
+    }
+
     //do scores assuming GOLD's perspective. if it is SILVER that is really
     //desired, then just negate at the end as this is a zero sum game
 

@@ -26,6 +26,7 @@ Search :: Search(int scoreHashBits)
     transTable.setHashKeySize(scoreHashBits);
     gameHistTable.setHashKeySize(GAME_HIST_HASH_BITS);
     searchHistTable.setHashKeySize(SEARCH_HIST_HASH_BITS);
+    eval.hashTable.setHashKeySize(EVAL_HASH_BITS);
 }
 
 //////////////////////////////////////////////////////////////////////////////

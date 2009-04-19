@@ -5,6 +5,7 @@
 #include "step.h"
 #include "hash.h"
 #include "historyscore.h"
+#include "evalhash.h"
 #include <list>
 
 //functions and structures used for scoring heurisitics
@@ -28,7 +29,8 @@ class Eval
     void loadWeights(string filename);
     void saveWeights(string filename);
 
-    HistoryScoreTable histTable;
+    HistoryScoreTable histTable; // store heurisitic scores for move ordering
+    EvalHashTable     hashTable; // keep hashtable for storing evaluations
 
     //evaluation weights////////////////////////
 
