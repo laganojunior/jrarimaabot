@@ -18,8 +18,6 @@
 #define SEARCH_MAX_COMBOS_PER_PLY 120
 
 //hash bit constants
-#define SEARCH_HIST_HASH_BITS 18
-#define EVAL_HASH_BITS       18
 #define GAME_HIST_HASH_BITS   15
 
 using namespace std;
@@ -27,7 +25,7 @@ using namespace std;
 class Search
 {
     public:
-    Search(int numScoreHashBits);
+    Search(Int64 hashTableBytes);
     ~Search();
 
     StepCombo iterativeDeepen(Board& board, int maxDepth, ostream& log);

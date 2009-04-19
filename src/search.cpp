@@ -18,15 +18,28 @@ using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
 //Constructor. Basically set last search mode to none and initialize the 
-//hash tables to the number of bits
+//hash tables to the specified size
 //////////////////////////////////////////////////////////////////////////////
-Search :: Search(int scoreHashBits)
+Search :: Search(Int64 hashTableSize)
 {
-    //Initialize hash tables
-    transTable.setHashKeySize(scoreHashBits);
+    //Initialize hash tables and spread the memory evenly
+    int tableSize = hashTableSize / 3;
+
+    int transTableBits = 0, searchHistTableBits = 0, evalHashBits = 0;
+    for (; Int64FromIndex(transTableBits) * sizeof(TranspositionEntry)
+           <= tableSize; transTableBits++);
+    for (; Int64FromIndex(searchHistTableBits) * sizeof(SearchHistEntry)
+           <= tableSize; searchHistTableBits++);
+    for (; Int64FromIndex(evalHashBits) * sizeof(EvalHashEntry)
+           <= tableSize; evalHashBits++);
+
+    transTable.setHashKeySize(transTableBits - 1);
+    searchHistTable.setHashKeySize(searchHistTableBits - 1);
+    eval.hashTable.setHashKeySize(evalHashBits - 1);
+
+    //Keep the game history table some preset size, as the program will
+    //not behave properly at all if this table is too small
     gameHistTable.setHashKeySize(GAME_HIST_HASH_BITS);
-    searchHistTable.setHashKeySize(SEARCH_HIST_HASH_BITS);
-    eval.hashTable.setHashKeySize(EVAL_HASH_BITS);
 }
 
 //////////////////////////////////////////////////////////////////////////////

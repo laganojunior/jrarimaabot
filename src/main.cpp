@@ -26,7 +26,7 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////
 void gameroom(fstream& logFile, string positionFile, string moveFile,  
               string gamestateFile, string evalWeightFile,
-              int maxDepth, int hashBits)
+              int maxDepth, int hashTableBytes)
 {
 
     //start logging, noting the time.
@@ -63,7 +63,7 @@ void gameroom(fstream& logFile, string positionFile, string moveFile,
     else //otherwise actually go through a search
     {
         
-        Search search(hashBits);
+        Search search(hashTableBytes);
         search.loadMoveFile(moveFile, board);
         search.eval.loadWeights(evalWeightFile);
         
@@ -88,15 +88,11 @@ int main(int argc, char * args[])
         srand(0);
 
         int mode = MODE_HELP;
-        int maxDepth = 4;
-        int hashBits;
+        //set depth to default 8
+        int maxDepth = 8;
 
-        //set hash bits low enough so that the hash table is at most 50 MB
-        for (hashBits = 0;
-             Int64FromIndex(hashBits) * 
-             (sizeof(TranspositionEntry)) < (Int64)50 * 1024 * 1024;
-             hashBits++);
-        hashBits --;
+        //set hash size to default 50MB.
+        Int64 hashTableBytes = 50 * 1024 * 1024;
 
         string positionFile;
         string moveFile;
@@ -130,17 +126,7 @@ int main(int argc, char * args[])
             }
             else if (string(args[i]) == string("--hashtablesize"))
             {
-                int hashSize = atoi(args[i+1]);
-
-                for (hashBits = 0;
-                     Int64FromIndex(hashBits) * 
-                     (sizeof(TranspositionEntry)) < 
-                      (Int64)hashSize * 1024 * 1024;
-                     hashBits++);
-
-                hashBits --;
-
-
+                hashTableBytes = atoi(args[i+1]) * 1024 * 1024;
                 ++i;
             }
             else if (string(args[i]) == string("--genmoves"))
@@ -212,7 +198,7 @@ int main(int argc, char * args[])
         if (mode == MODE_GAMEROOM)
         {
             gameroom(logFile, positionFile, moveFile, gamestateFile,
-                     evalWeightFile, maxDepth, hashBits);
+                     evalWeightFile, maxDepth, hashTableBytes);
         }
 
         logFile.flush();
