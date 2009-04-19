@@ -399,7 +399,11 @@ void Board :: undoStep(Step step)
 void Board :: playCombo(StepCombo& combo)
 {
     if (combo.isPass())
+    {
+        hash ^= hashStepsLeftParts[stepsLeft];
         stepsLeft -= combo.stepCost;
+        hash ^= hashStepsLeftParts[stepsLeft];
+    }
     else
         for (int i = 0; i < combo.numSteps; ++i)
             playStep(combo.steps[i]);
@@ -411,7 +415,11 @@ void Board :: playCombo(StepCombo& combo)
 void Board :: undoCombo(StepCombo& combo)
 {
     if (combo.isPass())
+    {
+        hash ^= hashStepsLeftParts[stepsLeft];
         stepsLeft += combo.stepCost;
+        hash ^= hashStepsLeftParts[stepsLeft];
+    }
     else
     {
         if (combo.numSteps == 0)
@@ -445,15 +453,15 @@ void Board :: changeTurn()
 //////////////////////////////////////////////////////////////////////////////
 void Board :: unchangeTurn(unsigned int oldStepsLeft)
 {
-    //set state to new turn
-    stepsLeft = oldStepsLeft;
-    sideToMove = oppColorOf(sideToMove);
-
     //update the hashes
     hash ^= hashTurnParts[sideToMove];
     hash ^= hashTurnParts[oppColorOf(sideToMove)];
     hash ^= hashStepsLeftParts[stepsLeft];
     hash ^= hashStepsLeftParts[oldStepsLeft];
+
+    //set state to new turn
+    stepsLeft = oldStepsLeft;
+    sideToMove = oppColorOf(sideToMove);
 }
 
 //////////////////////////////////////////////////////////////////////////////
