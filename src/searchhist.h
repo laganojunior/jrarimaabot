@@ -62,16 +62,31 @@ class SearchHistTable
     //Attempts to write a hash entry for the input hash occuring at the
     //input ply in respect to the current reference state. If there is
     //already an entry, it is overwritten only if the input ply is earlier
-    //than the current entry's ply
+    //than either of the current entry's ply
     //////////////////////////////////////////////////////////////////////////
     void setOccur(Int64 hash, unsigned char ply, unsigned char color)
     {
         SearchHistEntry& hist = hashes.getEntry(hash & hashMask);
-        
-        if (ply < hist.earliestOccur[color])
+
+        if (hash == hist.hash)
         {
-            hist.hash  = hash;
-            hist.earliestOccur[color] = ply;
+            //If the full hashes match, update the occurence for the
+            //specified color
+            if (ply < hist.earliestOccur[color])
+                hist.earliestOccur[color] = ply;
+        }
+        else
+        {
+            //Otherwise, check to see if the ply is lower than both
+            //of the entry's occurrences and if so, update the occurence
+            //for the specified color and reset the other color
+            if (ply < hist.earliestOccur[GOLD] &&
+                ply < hist.earliestOccur[SILVER])
+            {
+                hist.hash  = hash;
+                hist.earliestOccur[color] = ply;
+                hist.earliestOccur[oppColorOf(color)] = ply;
+            }
         }
     }
 
