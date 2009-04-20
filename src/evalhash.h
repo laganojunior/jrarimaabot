@@ -8,12 +8,13 @@
 class EvalHashEntry
 {
     public:
-    short score;  //static score for the board position scored
+    short score;  //static score for the board position scored in the
+                  //perspective of gold
+
     unsigned char useful; //a count of how many times this entry was used
                           //minus the amount of times it wasn't used. The
                           //entry is overwritten only if the useful count
                           //goes to 0
-    unsigned char color;  //the player which the score is for
 
     Int64 hash; //The full hash value
 };
@@ -43,7 +44,6 @@ class EvalHashTable
             hashes.getEntry(i).score = 0;
             hashes.getEntry(i).hash = 0;
             hashes.getEntry(i).useful = 0;
-            hashes.getEntry(i).color = 0;
         }
     }
 
@@ -87,7 +87,6 @@ class EvalHashTable
                 {
                 entry.hash = hash;
                 entry.score = score;
-                entry.color = color;
                 entry.useful = 1;
                 }
             }
@@ -95,7 +94,6 @@ class EvalHashTable
 
         entry.hash = hash;
         entry.score = score;
-        entry.color = color;
         entry.useful = 1;
     }
 

@@ -26,7 +26,7 @@ short Eval :: evalBoard(Board& board, unsigned char color)
     EvalHashEntry entry;
     if (hashTable.getEntry(board.hashPiecesOnly, entry))
     {
-        if (entry.color == color)
+        if (color == GOLD)
             return entry.score;
         else
             return -entry.score;
