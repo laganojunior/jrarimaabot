@@ -101,6 +101,9 @@ short Eval :: evalBoard(Board& board, unsigned char color)
 
     score = materialScore + positionScore + frozenScore;
 
+    //write the eval hash
+    hashTable.setEntry(board.hashPiecesOnly, score);
+
     if (color == GOLD)
         return score;
     else

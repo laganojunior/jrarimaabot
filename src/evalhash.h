@@ -74,7 +74,7 @@ class EvalHashTable
     //If there is already an entry, that entry's useful count is decremented
     //and will be overwritten if the useful count goes to 0.
     //////////////////////////////////////////////////////////////////////////
-    void setEntry(Int64 hash, short score, unsigned char color)
+    void setEntry(Int64 hash, short score)
     {
         EvalHashEntry& entry = hashes.getEntry(hash & hashMask);
 
