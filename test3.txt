@@ -1,0 +1,16 @@
+22w
+ +-----------------+
+8| r r r   d r r r |
+7| r         E d r |
+6|   h     c     R |
+5|           e D m |
+4|   H             |
+3|       C       H |
+2| R   D   C R     |
+1| R R R       R R |
+ +-----------------+
+   a b c d e d g h
+
+Actual
+dg7s Ef7e Eg7w rg8s
+rh8w ef5w ce6n ee5n

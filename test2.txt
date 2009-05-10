@@ -1,0 +1,16 @@
+15s
+ +-----------------+
+8| r r r   d r r r |
+7| r   c     d M r |
+6|   h m       e R |
+5|           E h   |
+4|                 |
+3|   H   C H   D   |
+2| R   D     R     |
+1| R R R   C   R R |
+ +-----------------+
+   a b c d e d g h
+
+Actual
+hg5s Dg3s hg4s de8s
+Ef5s Ef4s Ef3n hg3w hf3x

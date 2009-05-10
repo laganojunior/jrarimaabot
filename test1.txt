@@ -1,0 +1,18 @@
+10g
+ +-----------------+
+8| r r r d d r r r |
+7|   r c     m c r |
+6| H h         h R |
+5|       E         |
+4|         e       |
+3|       C H   M   |
+2| R   D       D   |
+1| R R R   C R R R |
+ +-----------------+
+   a b c d e d g h
+
+Omar vs. Fritzlein Game 15552
+Actual
+Ed5n Ed6e Mg3n Dg2n
+mf7w me7w cg7w ee4e
+
