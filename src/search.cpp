@@ -62,7 +62,6 @@ StepCombo Search :: iterativeDeepen(Board& board, int maxDepth, ostream& log)
     hashHits = 0;
     
     eval.reset();
-    killerTable.reset();
     transTable.reset();
     searchHistTable.reset();
     searchHistTable.setOccur(board.hashPiecesOnly, 0, board.sideToMove);
@@ -247,59 +246,6 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
     short oldAlpha = alpha;
     StepCombo bestCombo;
 
-
-    //Get a list of killer moves to try
-    vector<RawMove> killer = killerTable.getKillerMoves(ply);
-
-    //Check if the killer moves are available to play here, and add
-    //them to the pre gen list
-    for (int i = 0; i < killer.size(); i++)
-    {
-        StepCombo killerCombo;
-
-        if (killer[i].numSteps == 1)
-        {
-            if (board.gen1Step(killerCombo, killer[i].from1, killer[i].to1))
-            {
-                //Make sure the move isn't already in the pre gen list
-                bool alreadyIn = false;
-                for (int j = 0; j < preGenSteps.size(); j++)
-                {
-                    if (preGenSteps[j] == killerCombo)
-                    {
-                        alreadyIn = true;
-                        break;
-                    }   
-                }
-
-                //place the killer move onto the pre gen list
-                if (!alreadyIn)
-                    preGenSteps.push_back(killerCombo);
-            }
-        }
-        else
-        {
-            if (board.gen2Step(killerCombo, killer[i].from1, killer[i].to1,
-                                            killer[i].from2))
-            {
-                //Make sure the move isn't already in the pre gen list
-                bool alreadyIn = false;
-                for (int j = 0; j < preGenSteps.size(); j++)
-                {
-                    if (preGenSteps[j] == killerCombo)
-                    {
-                        alreadyIn = true;
-                        break;
-                    }   
-                }
-
-                //place the killer move onto the pre gen list
-                if (!alreadyIn)
-                    preGenSteps.push_back(killerCombo);
-            }
-        }
-    }
-
     //if there are any pre-gen steps, explore them first
     if (preGenSteps.size() > 0) 
     {
@@ -324,9 +270,6 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                     transTable.setEntry(board.hash, 
                             TRANSPOSITION_SCORETYPE_LOWER, beta, depth,
                             next.getRawMove());
-
-                    //increase killer score
-                    killerTable.addKillerMove(ply, next.getRawMove());
 
                     //increase history score
                     eval.histTable.increaseScore(next.getRawMove(), 
@@ -426,10 +369,6 @@ short Search :: searchNode(Board& board, int depth, int ply, short alpha,
                 transTable.setEntry(board.hash, 
                         TRANSPOSITION_SCORETYPE_LOWER, beta, depth,
                         next.getRawMove());
-
-
-                //increase killer score
-                killerTable.addKillerMove(ply, next.getRawMove());
 
                 //increase history score
                 eval.histTable.increaseScore(next.getRawMove(), 

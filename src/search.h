@@ -9,7 +9,6 @@
 #include "searchhist.h"
 #include "hash.h"
 #include "eval.h"
-#include "killer.h"
 #include "transposition.h"
 #include <string>
 #include <vector>
@@ -57,9 +56,6 @@ class Search
     //a hash table to keep data on which positions have already occured at 
     //an earlier ply in the same turn in order to not repeat nodes.
     SearchHistTable searchHistTable;
-
-    //Killer move table
-    KillerMoveTable killerTable;
 
     //keep global arrays for move generation, so that the step combo 
     //constructors are not called so much. The outer vector is indexed by
