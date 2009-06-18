@@ -44,23 +44,23 @@ void HistoryScoreTable :: scaleDown()
 //////////////////////////////////////////////////////////////////////////////
 //Returns the score for that move and for that color to move
 //////////////////////////////////////////////////////////////////////////////
-unsigned short HistoryScoreTable :: getScore(RawMove move, 
-                                             unsigned char color)
+unsigned short HistoryScoreTable :: getScore(RawMove move, unsigned char color)
 {
     return scores[move.from1][move.to1][move.from2][color];
 }
 
 //////////////////////////////////////////////////////////////////////////////
 //Increases the score for that move and that color to move by an amount 
-//dependent on the depth of the node (currently depth ^ 3)
+//dependent on the depth of the node (currently 2 ^ depth)
 //////////////////////////////////////////////////////////////////////////////
 void HistoryScoreTable :: increaseScore(RawMove move, unsigned char color, 
                                         int depth)
 {
     //Check if the score is really high, and if so, scale down the scores
-    if (scores[move.from1][move.to1][move.from2][color] > 20000)
+    if (scores[move.from1][move.to1][move.from2][color] > 30000)
         scaleDown();
 
     //Increase the score
-    scores[move.from1][move.to1][move.from2][color] += depth * depth * depth;
-}
+    scores[move.from1][move.to1][move.from2][color] += ((unsigned int) 1) 
+                                                        << depth;
+}      
