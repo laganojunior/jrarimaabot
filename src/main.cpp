@@ -153,6 +153,7 @@ int main(int argc, char * args[])
 
                 Eval eval;
                 eval.loadWeights(evalWeightFile);
+                eval.hashTable.setHashKeySize(1);
                 cout << eval.evalBoard(board, board.sideToMove) << endl;
             }
             else if (string(args[i]) == string("--test"))
